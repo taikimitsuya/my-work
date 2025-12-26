@@ -1,4 +1,7 @@
 // Algorithm 7.1: Batch Ring Bootstrapping 
+
+#include <vector>
+
 std::vector<LweSample> Batch_Bootstrapping(
     const std::vector<LweSample>& input_lwes,
     const BatchBootstrappingKey& bk,
