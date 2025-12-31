@@ -8,8 +8,8 @@
 #include <complex>
 
 // TFHEのコアヘッダ
-#include <tfhe/tfhe.h>
-#include <tfhe/tfhe_core.h>
+#include <tfhe.h>
+#include <tfhe_core.h>
 
 namespace bbii {
 
