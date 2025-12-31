@@ -1,0 +1,14 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/workspaces/my-work/src/libtfhe/fft_processors/spqlios/lagrangehalfc_impl_fma.s
+
+/workspaces/my-work/src/libtfhe/fft_processors/spqlios/spqlios-fft-fma.s
+
+/workspaces/my-work/src/libtfhe/fft_processors/spqlios/spqlios-ifft-fma.s
+
