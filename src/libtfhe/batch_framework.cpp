@@ -1,112 +1,100 @@
+// batch_framework.cpp
 #include "batch_framework.h"
-#include <iostream>
 
 namespace bbii {
 
-// 内部ヘルパー: 単項式 X^shift を生成または乗算する関数 (MK-TFHE依存)
-void add_rotated_to_acc(TRGSW* acc, TRGSW* input, int32_t shift, const BBIIParams& params) {
-    // 実際の実装では MK-TFHE の trgsw_mul_by_xai 等を使用する
-    // acc = acc + (input * X^shift)
-    // ここでは概念的な擬似コード
-    // trgsw_add_rotated(acc, input, shift, params.rgsw_params);
+PackedTRGSW create_zero_packed(const BBIIParams& params, BatchMode mode) {
+    TRGSW* c = new_TRGSW_array(1, params.tfhe_params->tgsw_params);
+    trgswClear(c, params.tfhe_params->tgsw_params);
+    return PackedTRGSW(c, mode);
 }
 
-PackedTRGSW batch_pack(const std::vector<TRGSW*>& inputs, 
-                       BatchMode target_mode, 
-                       const BBIIParams& params) {
-    // 論文[cite: 289, 311]: RGSW-Pack requires O(r) RGSW additions.
+// TRGSWの加算実装 (行列の各要素を加算)
+void trgsw_add_to(TRGSW* res, const TRGSW* A, const BBIIParams& params) {
+    const TGswParams* tgsw_p = params.tfhe_params->tgsw_params;
+    const TLweParams* tlwe_p = tgsw_p->tlwe_params;
     
-    if (inputs.size() > params.r) {
-        throw std::invalid_argument("Input size exceeds batch capacity r");
+    // TRGSWは (k+1)*l 個の TLWE からなる
+    int block_count = (tlwe_p->k + 1) * tgsw_p->l;
+
+    for (int i = 0; i < block_count; ++i) {
+        // TLwe同士の加算: res->blocs[i] += A->blocs[i]
+        // 各係数を足す
+        for (int j = 0; j <= tlwe_p->k; ++j) { // a_0...a_k, b
+             TorusPoly* res_poly = &res->blocs[i].a[j]; // TFHEの構造に依存(a[k]がbかも)
+             // 注: libtfheでは blocs[i] は TLweSample
+             // TLweSample { TorusPoly* a; TorusPoly* b; ... }
+             // a はサイズ k, b は単体
+             
+             // 簡易アクセスのため、TFHEの関数を使うのが安全だが、
+             // ここでは内部構造を操作する:
+             // tLweAddTo(&res->blocs[i], &A->blocs[i], tlwe_p); // もしあれば
+             
+             // ない場合は手動:
+             const TorusPoly* a_poly_src = (j < tlwe_p->k) ? &A->blocs[i].a[j] : &A->blocs[i].b;
+             TorusPoly* res_poly_dst = (j < tlwe_p->k) ? &res->blocs[i].a[j] : &res->blocs[i].b;
+             
+             for (int p = 0; p < params.N; ++p) {
+                 res_poly_dst->coefsT[p] += a_poly_src->coefsT[p];
+             }
+        }
+        // Current variance update (approx)
+        res->blocs[i].current_variance += A->blocs[i].current_variance;
     }
-
-    // 1. 結果格納用の TRGSW を確保 (初期値 0)
-    TRGSW* result = new_trgsw_ciphertext(params.rgsw_params);
-    // trgsw_clear(result); // 0埋め
-
-    // 2. 各入力をスロットに対応する基底(単項式)倍して加算
-    // テンソル構造のシミュレーション: i番目の要素を X^{i * stride} に配置するイメージ
-    int32_t stride = params.N / params.r; 
-
-    for (size_t i = 0; i < inputs.size(); ++i) {
-        // inputs[i] * v_i (ここでは v_i = X^{i * stride} と仮定)
-        add_rotated_to_acc(result, inputs[i], i * stride, params);
-    }
-
-    return PackedTRGSW(result, target_mode);
 }
 
-BatchMode get_mult_output_mode(BatchMode m1, BatchMode m2) {
-    // 論文[cite: 284]: Multiplication Logic
-    // If mode1 = "R12" and mode2 = "R12->R13", then mode3 = "R13".
-    
-    if ((m1 == BatchMode::R12 && m2 == BatchMode::R12_to_R13) ||
-        (m1 == BatchMode::R12_to_R13 && m2 == BatchMode::R12)) {
-        return BatchMode::R13;
-    }
-    
-    if ((m1 == BatchMode::R13 && m2 == BatchMode::R13_to_R12) ||
-        (m1 == BatchMode::R13_to_R12 && m2 == BatchMode::R13)) {
-        return BatchMode::R12;
-    }
+// 多項式回転の実装 (Negacyclic Shift)
+// X^N = -1 mod (X^N + 1)
+void torus_poly_mul_by_xai(TorusPoly* res, const TorusPoly* src, int32_t delta, int32_t N) {
+    // delta を [0, 2N) に正規化
+    delta %= (2 * N);
+    if (delta < 0) delta += 2 * N;
 
-    // Remark 3.1[cite: 299]: R12 * R12 などは不可
-    return BatchMode::None;
-}
-
-PackedTRGSW batch_mult(const PackedTRGSW& A, 
-                       const PackedTRGSW& B, 
-                       const BBIIParams& params) {
-    
-    // 1. モードチェック
-    BatchMode res_mode = get_mult_output_mode(A.mode, B.mode);
-    if (res_mode == BatchMode::None) {
-        throw std::runtime_error("Invalid batch multiplication modes");
-    }
-
-    // 2. RGSW乗算
-    // 論文[cite: 296, 313]: Batch-Mult takes O(log lambda) RGSW mults.
-    // 
-    // 実際の実装上の注意:
-    // BBIの理論通りに O(log r) で実装するには、テンソル分解に対応した
-    // 特殊なExternal Productが必要ですが、MK-TFHEなどの既存ライブラリを利用する場合、
-    // パッキングされた巨大な多項式同士の「通常のRGSW乗算」を行うことで、
-    // SIMD的に全スロットの乗算が一括で処理されます。
-    // (これが、巨大な次元Nにおける1回の乗算で済むという意味でのBatch化です)
-    
-    TRGSW* result = new_trgsw_ciphertext(params.rgsw_params);
-    
-    // trgsw_external_product などを呼び出す (MK-TFHE APIに依存)
-    // result = A (*) B
-    // trgsw_mult(result, A.cipher, B.cipher, params.rgsw_params);
-
-    return PackedTRGSW(result, res_mode);
-}
-
-std::vector<TRGSW*> unpack(const PackedTRGSW& packed_cipher, 
-                           const BBIIParams& params) {
-    // 論文[cite: 297, 315]: UnPack takes O(r) RGSW multiplications.
-    // 通常は Trace map (Tr_{K/K_12}) を用いて成分を抽出します。
-    // 実装的には、自己同型(Automorphism)と鍵切り替え(KeySwitching)を用いて
-    // 特定の基底成分のみを残し、他をゼロにする操作になります。
-
-    std::vector<TRGSW*> outputs;
-    outputs.reserve(params.r);
-
-    for (int i = 0; i < params.r; ++i) {
-        // 簡易実装: 
-        // 実際には各スロットを分離するためのマスク処理やTrace操作が必要。
-        // MK-TFHEでこれを完全に行うには、Automorphism Keyの生成が必要です。
+    for (int i = 0; i < N; ++i) {
+        // term: src[i] * X^i * X^delta = src[i] * X^{i+delta}
+        int deg = i + delta;
         
-        TRGSW* out = new_trgsw_ciphertext(params.rgsw_params);
-        
-        // 擬似コード: Extract i-th slot
-        // apply_trace_map(out, packed_cipher.cipher, i, params);
-        
-        outputs.push_back(out);
+        // Handle X^N = -1
+        if (deg < N) {
+            res->coefsT[deg] = src->coefsT[i];
+        } else if (deg < 2 * N) {
+            res->coefsT[deg - N] = -src->coefsT[i];
+        } else { // deg >= 2N
+             res->coefsT[deg - 2*N] = src->coefsT[i];
+        }
     }
+}
 
-    return outputs;
+void trgsw_mul_by_xai(TRGSW* res, const TRGSW* input, int32_t delta, const BBIIParams& params) {
+    const TGswParams* tgsw_p = params.tfhe_params->tgsw_params;
+    const TLweParams* tlwe_p = tgsw_p->tlwe_params;
+    int block_count = (tlwe_p->k + 1) * tgsw_p->l;
+    int N = params.N;
+
+    for (int i = 0; i < block_count; ++i) {
+        // a vector
+        for (int k = 0; k < tlwe_p->k; ++k) {
+            // 一時バッファを使って In-place 対応
+            TorusPoly temp_poly;
+            // new ではなく stack alloc or pre-alloc推奨だが簡易的に
+            temp_poly.coefsT = new Torus32[N]; 
+            
+            torus_poly_mul_by_xai(&temp_poly, &input->blocs[i].a[k], delta, N);
+            
+            // Copy back
+            for(int p=0; p<N; ++p) res->blocs[i].a[k].coefsT[p] = temp_poly.coefsT[p];
+            delete[] temp_poly.coefsT;
+        }
+        // b polynomial
+        TorusPoly temp_poly_b;
+        temp_poly_b.coefsT = new Torus32[N];
+        torus_poly_mul_by_xai(&temp_poly_b, &input->blocs[i].b, delta, N);
+        for(int p=0; p<N; ++p) res->blocs[i].b.coefsT[p] = temp_poly_b.coefsT[p];
+        delete[] temp_poly_b.coefsT;
+        
+        // Variance copy
+        res->blocs[i].current_variance = input->blocs[i].current_variance;
+    }
 }
 
 } // namespace bbii
