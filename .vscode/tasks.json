@@ -1,0 +1,41 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cmake",
+			"label": "CMake: ビルド",
+			"command": "build",
+			"targets": [
+				"[N/A - キットの選択]"
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"detail": "CMake テンプレート ビルド タスク"
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: インストール",
+			"command": "install",
+			"problemMatcher": [],
+			"detail": "CMake テンプレート インストール タスク"
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: パッケージ",
+			"command": "package",
+			"problemMatcher": [],
+			"detail": "CMake テンプレート パッケージ タスク"
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: ビルド",
+			"command": "build",
+			"targets": [
+				"[N/A - キットの選択]"
+			],
+			"group": "build",
+			"problemMatcher": [],
+			"detail": "CMake テンプレート ビルド タスク"
+		}
+	]
+}
