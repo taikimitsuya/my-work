@@ -42,7 +42,7 @@ struct BBIIParams {
         TLweParams* tlwe_p = new_TLweParams(N, k, alpha_bk, 1.0/2.0);
         TGswParams* tgsw_p = new_TGswParams(3, 10, tlwe_p); // l=3, Bgbit=10
 
-        tfhe_params = new TFheGateBootstrappingParameterSet(10, tgsw_p, lwe_p);
+        tfhe_params = new TFheGateBootstrappingParameterSet(10, 1, lwe_p, tgsw_p);
     }
 
     ~BBIIParams() {
