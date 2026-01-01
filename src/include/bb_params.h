@@ -53,7 +53,7 @@ struct BBIIParams {
 // 検証用 Toy Parameters
 inline BBIIParams* get_test_params() {
     // d=2, rho=3 => n=16, N=1024
-    return new BBIIParams(2, 3, 1024);
+    return new BBIIParams(2, 4, 1024);
 }
 
 } // namespace bbii
