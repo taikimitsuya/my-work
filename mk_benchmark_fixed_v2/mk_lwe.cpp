@@ -1,10 +1,8 @@
-#include "mk_tfhe_structs.h"
+#include "mk_methods.h"
 #include <vector>
 #include <cmath>
 #include <random>
 #include <limits>
-#include <tfhe.h>
-#include <tfhe_core.h>
 namespace bbii {
 Torus32 get_rnd() {
     static std::random_device rd; static std::mt19937 gen(rd());

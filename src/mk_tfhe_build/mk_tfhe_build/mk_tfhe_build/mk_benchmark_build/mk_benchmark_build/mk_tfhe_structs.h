@@ -7,25 +7,55 @@
 #include "bb_params.h"
 #include <tfhe.h>
 #include <tfhe_core.h>
+
 namespace bbii {
+
 struct MKRLweSample {
     int32_t k; int32_t N; TorusPolynomial** parts;
     MKRLweSample(int32_t parties, const TFheGateBootstrappingParameterSet* params) {
         this->k = parties; this->N = params->tgsw_params->tlwe_params->N;
         this->parts = new TorusPolynomial*[k + 1];
-        for (int i = 0; i <= k; ++i) { this->parts[i] = new_TorusPolynomial(N); torusPolynomialClear(this->parts[i]); }
+        for (int i = 0; i <= k; ++i) { 
+            this->parts[i] = new_TorusPolynomial(N); 
+            torusPolynomialClear(this->parts[i]); 
+        }
     }
-    ~MKRLweSample() { if(parts){ for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); delete[] parts; } }
+    ~MKRLweSample() { 
+        if(parts){ 
+            for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); 
+            delete[] parts; 
+        } 
+    }
 };
+
 struct MKLweSample {
-    LweSample* sample; int32_t k; int32_t n_per_party;
-    MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) : k(parties), n_per_party(n) {
-        sample = (LweSample*)std::malloc(sizeof(LweSample));
-        sample->a = new int32_t[k*n]; sample->b = 0; sample->current_variance = 0.0;
-        for(int i=0; i<k*n; ++i) sample->a[i] = 0;
+    LweSample* sample; 
+    int32_t k; int32_t n_per_party;
+    
+    MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) 
+        : k(parties), n_per_party(n) {
+        
+        // 修正: mallocではなくnewを使用し、LweSampleとして確保
+        // (LweSampleはC構造体だが、C++のnewで確保可能)
+        sample = new LweSample;
+        
+        // 配列確保
+        int32_t total_n = k * n;
+        sample->a = new int32_t[total_n]; // Torus32 is int32_t
+        sample->b = 0;
+        sample->current_variance = 0.0;
+        
+        for(int i=0; i<total_n; ++i) sample->a[i] = 0;
     }
-    ~MKLweSample() { if(sample){ if(sample->a) delete[] sample->a; std::free(sample); } }
+
+    ~MKLweSample() { 
+        if(sample){ 
+            if(sample->a) delete[] sample->a; 
+            delete sample; // freeではなくdeleteを使用
+        } 
+    }
 };
+
 struct MKSecretKey {
     LweKey* lwe_key; TGswKey* rlwe_key; 
     MKSecretKey(const TFheGateBootstrappingParameterSet* params) {
@@ -34,13 +64,21 @@ struct MKSecretKey {
     }
     ~MKSecretKey() { delete_LweKey(lwe_key); delete_TGswKey(rlwe_key); }
 };
+
 struct MKBootstrappingKey {
     int32_t k; int32_t n_per_party; std::vector<std::vector<TGswSampleFFT*>> bk_fft;
     MKBootstrappingKey(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) : k(parties), n_per_party(n) {
         bk_fft.resize(k);
-        for(int i=0;i<k;++i){ bk_fft[i].resize(n); for(int j=0;j<n;++j){ bk_fft[i][j]=new_TGswSampleFFT(params->tgsw_params); tGswFFTClear(bk_fft[i][j], params->tgsw_params); } }
+        for(int i=0;i<k;++i){ 
+            bk_fft[i].resize(n); 
+            for(int j=0;j<n;++j){ 
+                bk_fft[i][j]=new_TGswSampleFFT(params->tgsw_params); 
+                tGswFFTClear(bk_fft[i][j], params->tgsw_params); 
+            } 
+        }
     }
     ~MKBootstrappingKey() { for(auto& v:bk_fft) for(auto* p:v) delete_TGswSampleFFT(p); }
+    
     void generateKeyForParty(int pid, const MKSecretKey* sk, const TFheGateBootstrappingParameterSet* params) {
         for(int j=0; j<n_per_party; ++j) {
             TGswSample* t = new_TGswSample(params->tgsw_params);
@@ -50,5 +88,6 @@ struct MKBootstrappingKey {
         }
     }
 };
+
 } 
 #endif

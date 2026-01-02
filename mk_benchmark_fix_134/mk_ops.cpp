@@ -1,4 +1,4 @@
-#include "mk_tfhe_structs.h"
+#include "mk_methods.h"
 #include <tfhe.h>
 #include <tfhe_core.h>
 #include <polynomials.h>

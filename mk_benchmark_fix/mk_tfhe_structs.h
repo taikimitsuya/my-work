@@ -7,24 +7,30 @@
 #include "bb_params.h"
 #include <tfhe.h>
 #include <tfhe_core.h>
+
 namespace bbii {
 struct MKRLweSample {
     int32_t k; int32_t N; TorusPolynomial** parts;
     MKRLweSample(int32_t parties, const TFheGateBootstrappingParameterSet* params) {
         this->k = parties; this->N = params->tgsw_params->tlwe_params->N;
         this->parts = new TorusPolynomial*[k + 1];
-        for (int i = 0; i <= k; ++i) { this->parts[i] = new_TorusPolynomial(N); torusPolynomialClear(this->parts[i]); }
+        for (int i = 0; i <= k; ++i) { 
+            this->parts[i] = new_TorusPolynomial(N); 
+            torusPolynomialClear(this->parts[i]); 
+        }
     }
     ~MKRLweSample() { if(parts){ for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); delete[] parts; } }
 };
 struct MKLweSample {
     LweSample* sample; int32_t k; int32_t n_per_party;
     MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) : k(parties), n_per_party(n) {
-        sample = (LweSample*)std::malloc(sizeof(LweSample));
-        sample->a = new int32_t[k*n]; sample->b = 0; sample->current_variance = 0.0;
-        for(int i=0; i<k*n; ++i) sample->a[i] = 0;
+        sample = new LweSample;
+        int32_t total_n = k * n;
+        sample->a = new int32_t[total_n]; 
+        sample->b = 0; sample->current_variance = 0.0;
+        for(int i=0; i<total_n; ++i) sample->a[i] = 0;
     }
-    ~MKLweSample() { if(sample){ if(sample->a) delete[] sample->a; std::free(sample); } }
+    ~MKLweSample() { if(sample){ if(sample->a) delete[] sample->a; delete sample; } }
 };
 struct MKSecretKey {
     LweKey* lwe_key; TGswKey* rlwe_key; 

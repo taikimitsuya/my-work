@@ -1,87 +1,104 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <cassert>
-
+#include <limits>
 #include "mk_params.h"
 #include "mk_tfhe_structs.h"
 
 namespace bbii {
-    void mk_lwe_sym_encrypt(MKLweSample* result, Torus32 message, const MKSecretKey* sk, int32_t party_id, const TFheGateBootstrappingParameterSet* params);
-    Torus32 mk_lwe_decrypt(const MKLweSample* ciphertext, const std::vector<MKSecretKey*>& all_keys, const TFheGateBootstrappingParameterSet* params);
-    void mk_bootstrapping(MKLweSample* result, const MKLweSample* input, const MKBootstrappingKey* mk_bk, Torus32 mu, const TFheGateBootstrappingParameterSet* params);
+    void mk_lwe_sym_encrypt(MKLweSample*, Torus32, const MKSecretKey*, int32_t, const TFheGateBootstrappingParameterSet*);
+    Torus32 mk_lwe_decrypt(const MKLweSample*, const std::vector<MKSecretKey*>&, const TFheGateBootstrappingParameterSet*);
+    void mk_bootstrapping(MKLweSample*, const MKLweSample*, const MKBootstrappingKey*, Torus32, const TFheGateBootstrappingParameterSet*);
 }
 
-using namespace bbii;
+using namespace bbii; 
 using namespace std;
 
-double verify_extracted_sample(const bbii::MKLweSample* extracted, 
-                               const vector<bbii::MKSecretKey*>& keys, 
-                               const bbii::MKParams* mk_p) {
-    int32_t N = mk_p->N;
-    int32_t k = mk_p->k;
-    
-    Torus32 phase = extracted->sample->b;
-
-    for (int u = 0; u < k; ++u) {
-        const IntPolynomial* s_poly = keys[u]->rlwe_key->key; // Fixed: removed &
-        int offset = u * N;
-        for (int i = 0; i < N; ++i) {
-            Torus32 a_val = extracted->sample->a[offset + i];
-            int32_t s_val = s_poly->coefs[i]; 
-            phase -= a_val * s_val;
+// 結果検証用関数
+double verify(const bbii::MKLweSample* ex, const vector<bbii::MKSecretKey*>& k, const bbii::MKParams* p) {
+    Torus32 ph = ex->sample->b; 
+    int32_t N = p->N;
+    for(int u=0; u<p->k; ++u) {
+        for(int i=0; i<N; ++i) {
+            ph -= ex->sample->a[u*N+i] * k[u]->rlwe_key->key->coefs[i];
         }
     }
-    return t32tod(phase);
+    return t32tod(ph);
 }
 
 int main() {
-    cout << "=== Multi-Key FHE (MK-TFHE) Test Start ===" << endl;
+    int32_t k, d, rho, N;
 
-    int32_t k = 2;
-    int32_t d = 2;
-    int32_t rho = 5; 
-    int32_t N = 1024;
-    
-    cout << "Generating Parameters (k=" << k << ", n=" << 2*pow(d,rho) << ", N=" << N << ")..." << endl;
-    MKParams* mk_params = get_mk_test_params(k, d, rho, N);
-    const TFheGateBootstrappingParameterSet* tfhe_params = mk_params->get_tfhe_params();
+    cout << "========================================" << endl;
+    cout << "   Multi-Key FHE (MK-TFHE) Parameter Setup" << endl;
+    cout << "========================================" << endl;
 
-    cout << "Generating Keys..." << endl;
-    vector<MKSecretKey*> secret_keys(k);
-    MKBootstrappingKey* mk_bk = new MKBootstrappingKey(k, mk_params->n_per_party, tfhe_params);
-
-    for(int i=0; i<k; ++i) {
-        secret_keys[i] = new MKSecretKey(tfhe_params);
-        mk_bk->generateKeyForParty(i, secret_keys[i], tfhe_params);
+    // 1. パーティ数 (k)
+    cout << "Enter number of parties (k) [e.g., 2]: ";
+    while(!(cin >> k) || k < 1) {
+        cout << "Invalid input. k must be >= 1: ";
+        cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 
-    cout << "Encrypting message..." << endl;
-    MKLweSample* input_ct = new MKLweSample(k, mk_params->n_per_party, tfhe_params);
+    // 2. 分解の底 (d)
+    cout << "Enter decomposition base (d) [e.g., 2]: ";
+    while(!(cin >> d) || d < 2) {
+        cout << "Invalid input. d must be >= 2: ";
+        cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    // 3. 分解の深さ (rho)
+    cout << "Enter decomposition depth (rho) [e.g., 5]: ";
+    while(!(cin >> rho) || rho < 1) {
+        cout << "Invalid input. rho must be >= 1: ";
+        cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    // 4. 多項式の次数 (N)
+    cout << "Enter polynomial degree (N) [e.g., 1024]: ";
+    while(!(cin >> N) || N < 1) {
+        cout << "Invalid input. N must be >= 1: ";
+        cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    // 計算されるLWE次元の確認
+    int32_t n = 2 * pow(d, rho);
+    cout << "\n----------------------------------------" << endl;
+    cout << " Configuration Summary:" << endl;
+    cout << "  Parties (k)      : " << k << endl;
+    cout << "  LWE Dimension (n): " << n << " (calculated as 2 * d^rho)" << endl;
+    cout << "  RLWE Degree (N)  : " << N << endl;
+    cout << "----------------------------------------" << endl;
+    cout << "Generating Parameters and Keys..." << endl;
+
+    // パラメータ生成
+    MKParams* mp = get_mk_test_params(k, d, rho, N);
     
-    double message_double = 0.25;
-    Torus32 message = dtot32(message_double);
-    mk_lwe_sym_encrypt(input_ct, message, secret_keys[0], 0, tfhe_params);
-
-    Torus32 decrypted_raw = mk_lwe_decrypt(input_ct, secret_keys, tfhe_params);
-    cout << "  Input Decrypted Phase: " << t32tod(decrypted_raw) 
-         << " (Expected: " << message_double << ")" << endl;
-
-    cout << "Running MK Bootstrapping (This may take time)..." << endl;
-    MKLweSample* output_ct = new MKLweSample(k, N, tfhe_params);
+    // 鍵生成
+    vector<MKSecretKey*> sks(k); 
+    MKBootstrappingKey* bk = new MKBootstrappingKey(k, mp->n_per_party, mp->get_tfhe_params());
     
-    mk_bootstrapping(output_ct, input_ct, mk_bk, dtot32(0.5), tfhe_params);
-
-    double result_phase = verify_extracted_sample(output_ct, secret_keys, mk_params);
+    for(int i=0; i<k; ++i){ 
+        sks[i] = new MKSecretKey(mp->get_tfhe_params()); 
+        bk->generateKeyForParty(i, sks[i], mp->get_tfhe_params()); 
+    }
     
-    cout << "Result Phase: " << result_phase << endl;
-    cout << "Test Finished Successfully." << endl;
-
-    delete input_ct;
-    delete output_ct;
-    delete mk_bk;
-    delete mk_params;
-    for(auto sk : secret_keys) delete sk;
-
+    // 暗号化 (Party 0)
+    cout << "Encrypting message (m=0.25) by Party 0..." << endl;
+    bbii::MKLweSample* in = new bbii::MKLweSample(k, mp->n_per_party, mp->get_tfhe_params());
+    
+    mk_lwe_sym_encrypt(in, dtot32(0.25), sks[0], 0, mp->get_tfhe_params());
+    cout << "  -> Input Decrypted Check: " << t32tod(mk_lwe_decrypt(in, sks, mp->get_tfhe_params())) << endl;
+    
+    // Bootstrapping
+    cout << "Running MK Bootstrapping (with test vector m=0.5)..." << endl;
+    bbii::MKLweSample* out = new bbii::MKLweSample(k, N, mp->get_tfhe_params());
+    
+    mk_bootstrapping(out, in, bk, dtot32(0.5), mp->get_tfhe_params());
+    
+    // 結果検証
+    cout << "  -> Result Phase: " << verify(out, sks, mp) << endl;
+    cout << "Test Finished." << endl;
+    
     return 0;
 }
