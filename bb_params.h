@@ -16,7 +16,6 @@ struct BBIIParams {
     
     BBIIParams(int32_t d_val, int32_t rho_val, int32_t N_val) : d(d_val), rho(rho_val), N(N_val) {
         // n = 2 * d^rho
-        // rho=20 の場合、n = 2,097,152 になります
         n = 2 * std::pow(d, rho); 
         r = N / 2; 
         
@@ -35,8 +34,8 @@ struct BBIIParams {
     ~BBIIParams() { delete_gate_bootstrapping_parameters(tfhe_params); }
 };
 
-// ★ここを変更しました: (d=2, rho=20, N=1024)
-inline BBIIParams* get_test_params() { return new BBIIParams(2, 20, 1024); }
+// ★ここを変更しました: (d=2, rho=9, N=2048)
+inline BBIIParams* get_test_params() { return new BBIIParams(2, 9, 2048); }
 
 }
 #endif
