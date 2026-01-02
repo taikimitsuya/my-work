@@ -19,7 +19,7 @@ using namespace std;
 
 // Sample Extract後の巨大LWE (次元 k*N) を復号して検証するヘルパー関数
 // (mk_lwe_decrypt は 次元 k*n 用なので、ここではRLWE鍵を使って復号します)
-double verify_extracted_sample(const MKLweSample* extracted, 
+double verify_extracted_sample(const bbii::MKLweSample* extracted, 
                                const vector<MKSecretKey*>& keys, 
                                const MKParams* mk_p) {
     int32_t N = mk_p->N;
@@ -30,7 +30,7 @@ double verify_extracted_sample(const MKLweSample* extracted,
 
     for (int u = 0; u < k; ++u) {
         // ユーザーuのRLWE秘密鍵 (多項式) を取得
-        const IntPolynomial* s_poly = &keys[u]->rlwe_key->key; // TGswKey -> IntPoly
+        const IntPolynomial* s_poly = /*&*/keys[u]->rlwe_key->key; // TGswKey -> IntPoly
 
         // LWEのaベクトル (サイズ k*N) のうち、このユーザーのブロック
         int offset = u * N;
@@ -77,7 +77,7 @@ int main() {
     // 3. 暗号化 (Encryption)
     // Party 0 が メッセージ 0.25 (1/4) を暗号化する
     cout << "Encrypting message..." << endl;
-    MKLweSample* input_ct = new MKLweSample(k, mk_params->n_per_party, tfhe_params);
+    bbii::MKLweSample* input_ct = new bbii::MKLweSample(k, mk_params->n_per_party, tfhe_params);
     
     double message_double = 0.25;
     Torus32 message = dtot32(message_double);
@@ -97,7 +97,7 @@ int main() {
     cout << "Running MK Bootstrapping (This may take time)..." << endl;
     
     // 出力用: 次元は k * N になる (Sample Extractの結果)
-    MKLweSample* output_ct = new MKLweSample(k, N, tfhe_params); // 注意: 第2引数は N
+    bbii::MKLweSample* output_ct = new bbii::MKLweSample(k, N, tfhe_params); // 注意: 第2引数は N
     
     // テストベクトル v = 0.25 (回転の基準)
     // 実際には入力暗号文の位相分だけ回転するため、結果は v * X^{-message} の定数項などになるが
