@@ -57,7 +57,7 @@ int main() {
     }
 
     cout << "Encrypting message..." << endl;
-    MKLweSample* input_ct = new MKLweSample(k, mk_params->n_per_party, tfhe_params);
+    bbii::MKLweSample* input_ct = new bbii::MKLweSample(k, mk_params->n_per_party, tfhe_params);
     
     double message_double = 0.25;
     Torus32 message = dtot32(message_double);
@@ -68,7 +68,7 @@ int main() {
          << " (Expected: " << message_double << ")" << endl;
 
     cout << "Running MK Bootstrapping (This may take time)..." << endl;
-    MKLweSample* output_ct = new MKLweSample(k, N, tfhe_params);
+    bbii::MKLweSample* output_ct = new bbii::MKLweSample(k, N, tfhe_params);
     
     mk_bootstrapping(output_ct, input_ct, mk_bk, dtot32(0.5), tfhe_params);
 

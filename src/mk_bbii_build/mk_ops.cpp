@@ -71,7 +71,7 @@ void mk_external_product(MKRLweSample* result,
     
     // 計算用の一時的なTLWEサンプル (シングルキー用、k=1)
     // 構造: (a, b) のペア。N個の係数を持つ多項式2つ。
-    TLweParams* tlwe_params = params->tgsw_params->tlwe_params;
+    const TLweParams* tlwe_params = params->tgsw_params->tlwe_params;
     TLweSample* temp_tlwe = new_TLweSample(tlwe_params);
 
     // 結果蓄積用バッファは、呼び出し元でクリアされていることを期待しない場合、
