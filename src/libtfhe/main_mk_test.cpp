@@ -77,7 +77,7 @@ int main() {
     // 3. 暗号化 (Encryption)
     // Party 0 が メッセージ 0.25 (1/4) を暗号化する
     cout << "Encrypting message..." << endl;
-    MKLweSample* input_ct = new MKLweSample(k, mk_params->n_per_party, tfhe_params);
+    bbii::MKLweSample* input_ct = new bbii::MKLweSample(k, mk_params->n_per_party, tfhe_params);
     
     double message_double = 0.25;
     Torus32 message = dtot32(message_double);
