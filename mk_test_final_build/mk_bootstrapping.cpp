@@ -1,6 +1,5 @@
 #include "mk_methods.h"
 #include <cmath>
-#include <chrono> 
 #include <iostream>
 #include <tfhe.h>
 #include <tfhe_core.h>
@@ -22,9 +21,6 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
     mk_rlwe_copy(temp_acc, acc);
     mk_mul_xai(acc, temp_acc, -bar_b, N);
 
-    auto start_loop = std::chrono::high_resolution_clock::now();
-    long long op_count = 0;
-
     for (int u = 0; u < k; ++u) { 
         for (int i = 0; i < n; ++i) { 
             int32_t global_idx = u * n + i;
@@ -34,18 +30,8 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
 
             mk_mul_xai(temp_acc, acc, bar_ai, N);
             mk_cmux(acc, mk_bk->bk_fft[u][i], acc, temp_acc, u, params);
-            op_count++;
         }
     }
-    
-    auto end_loop = std::chrono::high_resolution_clock::now();
-    double total_ms = std::chrono::duration<double, std::milli>(end_loop - start_loop).count();
-    double avg_per_op = (op_count > 0) ? total_ms / op_count : 0.0;
-
-    std::cout << "    [Granularity 2] BlindRotate Loop Total: " << total_ms << " ms" << std::endl;
-    std::cout << "    [Granularity 3] Avg per Atomic Op (CMUX): " << avg_per_op << " ms (" 
-              << op_count << " ops executed)" << std::endl;
-
     delete temp_acc;
 }
 

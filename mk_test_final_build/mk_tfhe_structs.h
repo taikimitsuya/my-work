@@ -21,37 +21,39 @@ struct MKRLweSample {
         }
     }
     ~MKRLweSample() { 
-        if(parts){ 
-            for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); 
-            delete[] parts; 
-        } 
+        if(parts){ for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); delete[] parts; } 
     }
 };
 
 struct MKLweSample {
     LweSample* sample; 
     int32_t k; int32_t n_per_party;
-    
-    MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) 
-        : k(parties), n_per_party(n) {
-        
-        // FIX: Use malloc to bypass the C++ constructor requirement.
-        // We are manually managing the 'a' array for multi-key size anyway.
-        sample = (LweSample*)std::malloc(sizeof(LweSample));
-        if (!sample) throw std::runtime_error("Malloc failed");
+    int32_t* my_array; // 配列管理用
 
+    MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) 
+        : k(parties), n_per_party(n), my_array(nullptr) {
+        
+        // TFHEの正規コンストラクタを使用
+        sample = new LweSample(params->in_out_params);
+        
+        // デフォルトの配列を削除
+        if(sample->a) delete[] sample->a;
+
+        // マルチキーサイズで再確保
         int32_t total_n = k * n;
-        sample->a = new int32_t[total_n]; 
-        sample->b = 0; 
-        sample->current_variance = 0.0;
+        my_array = new int32_t[total_n]; 
+        sample->a = my_array;
         
         for(int i=0; i<total_n; ++i) sample->a[i] = 0;
+        sample->b = 0;
+        sample->current_variance = 0.0;
     }
 
     ~MKLweSample() { 
         if(sample){ 
-            if(sample->a) delete[] sample->a; 
-            std::free(sample); // Match malloc
+            sample->a = nullptr; // 二重解放防止
+            delete sample;       // ガワだけ削除
+            if(my_array) delete[] my_array; // 中身を削除
         } 
     }
 };
@@ -78,6 +80,7 @@ struct MKBootstrappingKey {
         }
     }
     ~MKBootstrappingKey() { for(auto& v:bk_fft) for(auto* p:v) delete_TGswSampleFFT(p); }
+    
     void generateKeyForParty(int pid, const MKSecretKey* sk, const TFheGateBootstrappingParameterSet* params) {
         for(int j=0; j<n_per_party; ++j) {
             TGswSample* t = new_TGswSample(params->tgsw_params);
