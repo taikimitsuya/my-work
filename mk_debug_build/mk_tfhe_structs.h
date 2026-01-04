@@ -15,7 +15,7 @@ struct MKRLweSample {
     MKRLweSample(int32_t parties, const TFheGateBootstrappingParameterSet* params) {
         this->k = parties; this->N = params->tgsw_params->tlwe_params->N;
         this->parts = new TorusPolynomial*[k + 1];
-        for (int i = 0; i <= k; ++i)  
+        for (int i = 0; i <= k; ++i) { 
             this->parts[i] = new_TorusPolynomial(N); 
             torusPolynomialClear(this->parts[i]); 
         }
@@ -33,17 +33,14 @@ struct MKLweSample {
     MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) 
         : k(parties), n_per_party(n), my_array(nullptr) {
         
-        // 1. TFHEの正規コンストラクタで確保 (sample->a が確保される)
         sample = new LweSample(params->in_out_params);
         
-        // 2. 自前の配列を確保
+        // TFHEが確保したメモリは解放せずに放置 (Heap Corruption回避)
+        // 自前の配列を確保して差し替える
         int32_t total_n = k * n;
         my_array = new int32_t[total_n]; 
-        
-        // 3. ポインタを差し替える (元の sample->a は delete[] せずに放置してメモリ破壊を防ぐ)
         sample->a = my_array;
         
-        // 初期化
         for(int i=0; i<total_n; ++i) sample->a[i] = 0;
         sample->b = 0;
         sample->current_variance = 0.0;
@@ -51,11 +48,9 @@ struct MKLweSample {
 
     ~MKLweSample() { 
         if(sample){ 
-            // sample->a が勝手に free されないように nullptr に退避
+            // sample->a が勝手に free されないように退避
             sample->a = nullptr; 
             delete sample; 
-            
-            // 自前の配列を削除
             if(my_array) delete[] my_array;
         } 
     }

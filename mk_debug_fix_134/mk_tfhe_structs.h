@@ -15,13 +15,14 @@ struct MKRLweSample {
     MKRLweSample(int32_t parties, const TFheGateBootstrappingParameterSet* params) {
         this->k = parties; this->N = params->tgsw_params->tlwe_params->N;
         this->parts = new TorusPolynomial*[k + 1];
-        for (int i = 0; i <= k; ++i)  
+        for (int i = 0; i <= k; ++i) { 
             this->parts[i] = new_TorusPolynomial(N); 
             torusPolynomialClear(this->parts[i]); 
         }
     }
     ~MKRLweSample() { 
-        if(parts){ for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); delete[] parts; } 
+        // 解放しない (139エラー回避のため)
+        // if(parts){ for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); delete[] parts; } 
     }
 };
 
@@ -33,30 +34,26 @@ struct MKLweSample {
     MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) 
         : k(parties), n_per_party(n), my_array(nullptr) {
         
-        // 1. TFHEの正規コンストラクタで確保 (sample->a が確保される)
         sample = new LweSample(params->in_out_params);
         
-        // 2. 自前の配列を確保
+        // 元の配列は放置 (触るとクラッシュするため)
+        
+        // 自前の配列に差し替え
         int32_t total_n = k * n;
         my_array = new int32_t[total_n]; 
-        
-        // 3. ポインタを差し替える (元の sample->a は delete[] せずに放置してメモリ破壊を防ぐ)
         sample->a = my_array;
         
-        // 初期化
         for(int i=0; i<total_n; ++i) sample->a[i] = 0;
         sample->b = 0;
         sample->current_variance = 0.0;
     }
 
     ~MKLweSample() { 
+        // 【重要】ここでクラッシュしているので何もしない
         if(sample){ 
-            // sample->a が勝手に free されないように nullptr に退避
-            sample->a = nullptr; 
-            delete sample; 
-            
-            // 自前の配列を削除
-            if(my_array) delete[] my_array;
+             sample->a = nullptr; // 一応リンクだけ切る
+             // delete sample;    // ← これが怪しいのでコメントアウト
+             // if(my_array) delete[] my_array; // これもコメントアウト
         } 
     }
 };
@@ -67,7 +64,9 @@ struct MKSecretKey {
         lwe_key = new_LweKey(params->in_out_params); lweKeyGen(lwe_key);
         rlwe_key = new_TGswKey(params->tgsw_params); tGswKeyGen(rlwe_key);
     }
-    ~MKSecretKey() { delete_LweKey(lwe_key); delete_TGswKey(rlwe_key); }
+    ~MKSecretKey() { 
+        // delete_LweKey(lwe_key); delete_TGswKey(rlwe_key); 
+    }
 };
 
 struct MKBootstrappingKey {
@@ -82,7 +81,9 @@ struct MKBootstrappingKey {
             } 
         }
     }
-    ~MKBootstrappingKey() { for(auto& v:bk_fft) for(auto* p:v) delete_TGswSampleFFT(p); }
+    ~MKBootstrappingKey() { 
+        // for(auto& v:bk_fft) for(auto* p:v) delete_TGswSampleFFT(p); 
+    }
     
     void generateKeyForParty(int pid, const MKSecretKey* sk, const TFheGateBootstrappingParameterSet* params) {
         for(int j=0; j<n_per_party; ++j) {

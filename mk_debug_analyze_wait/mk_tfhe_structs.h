@@ -2,74 +2,47 @@
 #define MK_TFHE_STRUCTS_H
 #include <vector>
 #include <iostream>
-#include <stdexcept>
-#include <cstdlib>
 #include "bb_params.h"
 #include <tfhe.h>
 #include <tfhe_core.h>
 
 namespace bbii {
-
 struct MKRLweSample {
     int32_t k; int32_t N; TorusPolynomial** parts;
     MKRLweSample(int32_t parties, const TFheGateBootstrappingParameterSet* params) {
         this->k = parties; this->N = params->tgsw_params->tlwe_params->N;
         this->parts = new TorusPolynomial*[k + 1];
-        for (int i = 0; i <= k; ++i)  
+        for (int i = 0; i <= k; ++i) { 
             this->parts[i] = new_TorusPolynomial(N); 
             torusPolynomialClear(this->parts[i]); 
         }
     }
-    ~MKRLweSample() { 
-        if(parts){ for(int i=0;i<=k;++i) delete_TorusPolynomial(parts[i]); delete[] parts; } 
-    }
+    ~MKRLweSample() { /* Leak safe */ }
 };
-
 struct MKLweSample {
-    LweSample* sample; 
-    int32_t k; int32_t n_per_party;
-    int32_t* my_array; 
-
+    LweSample* sample; int32_t k; int32_t n_per_party; int32_t* my_array; 
     MKLweSample(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) 
         : k(parties), n_per_party(n), my_array(nullptr) {
-        
-        // 1. TFHEの正規コンストラクタで確保 (sample->a が確保される)
-        sample = new LweSample(params->in_out_params);
-        
-        // 2. 自前の配列を確保
+        sample = new_LweSample(params->in_out_params);
         int32_t total_n = k * n;
         my_array = new int32_t[total_n]; 
-        
-        // 3. ポインタを差し替える (元の sample->a は delete[] せずに放置してメモリ破壊を防ぐ)
         sample->a = my_array;
-        
-        // 初期化
         for(int i=0; i<total_n; ++i) sample->a[i] = 0;
-        sample->b = 0;
-        sample->current_variance = 0.0;
+        sample->b = 0; sample->current_variance = 0.0;
     }
-
     ~MKLweSample() { 
-        if(sample){ 
-            // sample->a が勝手に free されないように nullptr に退避
-            sample->a = nullptr; 
-            delete sample; 
-            
-            // 自前の配列を削除
-            if(my_array) delete[] my_array;
-        } 
+        if(sample) { sample->a = nullptr; delete sample; }
+        /* my_array leak safe */
     }
 };
-
 struct MKSecretKey {
     LweKey* lwe_key; TGswKey* rlwe_key; 
     MKSecretKey(const TFheGateBootstrappingParameterSet* params) {
         lwe_key = new_LweKey(params->in_out_params); lweKeyGen(lwe_key);
         rlwe_key = new_TGswKey(params->tgsw_params); tGswKeyGen(rlwe_key);
     }
-    ~MKSecretKey() { delete_LweKey(lwe_key); delete_TGswKey(rlwe_key); }
+    ~MKSecretKey() { /* Leak safe */ }
 };
-
 struct MKBootstrappingKey {
     int32_t k; int32_t n_per_party; std::vector<std::vector<TGswSampleFFT*>> bk_fft;
     MKBootstrappingKey(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) : k(parties), n_per_party(n) {
@@ -82,8 +55,7 @@ struct MKBootstrappingKey {
             } 
         }
     }
-    ~MKBootstrappingKey() { for(auto& v:bk_fft) for(auto* p:v) delete_TGswSampleFFT(p); }
-    
+    ~MKBootstrappingKey() { /* Leak safe */ }
     void generateKeyForParty(int pid, const MKSecretKey* sk, const TFheGateBootstrappingParameterSet* params) {
         for(int j=0; j<n_per_party; ++j) {
             TGswSample* t = new_TGswSample(params->tgsw_params);

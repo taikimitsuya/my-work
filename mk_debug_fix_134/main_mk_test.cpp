@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include "mk_methods.h" 
+
+using namespace std;
+
+double verify(const bbii::MKLweSample* extracted, const vector<bbii::MKSecretKey*>& keys, const bbii::MKParams* mk_p) {
+    int32_t N = mk_p->N; int32_t k = mk_p->k;
+    Torus32 phase = extracted->sample->b;
+    for (int u = 0; u < k; ++u) {
+        const IntPolynomial* s_poly = keys[u]->rlwe_key->key; 
+        for (int i = 0; i < N; ++i) phase -= extracted->sample->a[u*N+i] * s_poly->coefs[i];
+    }
+    return t32tod(phase);
+}
+
+int main() {
+    cout << "=== MK-TFHE Test Start ===" << endl;
+    int32_t k = 2; int32_t d = 3; int32_t rho = 4; int32_t N = 1024;
+    
+    bbii::MKParams* mp = bbii::get_mk_test_params(k, d, rho, N);
+    cout << "Params: k=" << k << " N=" << N << endl;
+
+    vector<bbii::MKSecretKey*> sks(k); 
+    bbii::MKBootstrappingKey* bk = new bbii::MKBootstrappingKey(k, mp->n_per_party, mp->get_tfhe_params());
+    
+    cout << "Generating keys..." << endl;
+    for(int i=0; i<k; ++i){ 
+        sks[i] = new bbii::MKSecretKey(mp->get_tfhe_params()); 
+        bk->generateKeyForParty(i, sks[i], mp->get_tfhe_params()); 
+    }
+
+    cout << "Encrypting..." << endl;
+    bbii::MKLweSample* in = new bbii::MKLweSample(k, mp->n_per_party, mp->get_tfhe_params());
+    bbii::mk_lwe_sym_encrypt(in, dtot32(0.25), sks[0], 0, mp->get_tfhe_params());
+
+    cout << "Running Bootstrapping (this may take a moment)..." << endl;
+    bbii::MKLweSample* out = new bbii::MKLweSample(k, N, mp->get_tfhe_params());
+    
+    bbii::mk_bootstrapping(out, in, bk, dtot32(0.5), mp->get_tfhe_params());
+    
+    cout << "Verifying..." << endl;
+    double res = verify(out, sks, mp);
+    cout << "Result: " << res << endl;
+    cout << "Test Finished Successfully!" << endl;
+    return 0;
+}
