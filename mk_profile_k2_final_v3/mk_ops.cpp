@@ -2,11 +2,13 @@
 #include "mk_profiler.h"
 #include <iostream>
 #include <chrono>
-#include <tfhe/tfhe.h>
-#include <tfhe/tfhe_core.h>
-#include <tfhe/polynomials.h>
-#include <tfhe/tlwe.h>
-#include <tfhe/tgsw.h>
+
+// 【修正】インクルードパス
+#include <tfhe.h>
+#include <tfhe_core.h>
+#include <polynomials.h>
+#include <tlwe.h>
+#include <tgsw.h>
 
 namespace bbii {
 void mk_rlwe_clear(MKRLweSample* r){ for(int i=0;i<=r->k;++i) torusPolynomialClear(r->parts[i]); }
@@ -18,22 +20,20 @@ void mk_external_product(MKRLweSample* res, const TGswSampleFFT* bk, const MKRLw
     auto start = std::chrono::high_resolution_clock::now();
 
     TLweParams* tlp = const_cast<TLweParams*>(p->tgsw_params->tlwe_params);
-    TLweSample* tmp = new_TLweSample(tlp); // C-alloc
+    TLweSample* tmp = new_TLweSample(tlp); 
     
     mk_rlwe_clear(res);
     for(int i=0;i<=acc->k;++i){
-        // tmp は標準TLWE (size k+1=2) なので a[0] がbody, b がmask
         torusPolynomialClear(&tmp->a[0]); 
         torusPolynomialCopy(tmp->b, acc->parts[i]); 
         tmp->current_variance=0;
         
-        // ここが重い計算
         tGswFFTExternMulToTLwe(tmp, bk, const_cast<TGswParams*>(p->tgsw_params));
         
         torusPolynomialAddTo(res->parts[i], tmp->b); 
         torusPolynomialAddTo(res->parts[pid], &tmp->a[0]);
     }
-    delete_TLweSample(tmp); // C-free
+    delete_TLweSample(tmp);
 
     auto end = std::chrono::high_resolution_clock::now();
     global_profiler.time_external_product += std::chrono::duration<double, std::milli>(end - start).count();

@@ -19,7 +19,7 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
     int32_t k=acc->k, n=mk_bk->n_per_party, N=acc->N, _2N=2*N;
     int32_t bar_b = modSwitchFromTorus32(bk_input->sample->b, _2N);
     
-    MKRLweSample* temp_acc = new MKRLweSample(k, params); // Heap alloc
+    MKRLweSample* temp_acc = new MKRLweSample(k, params); 
     mk_rlwe_copy(temp_acc, acc);
     mk_mul_xai(acc, temp_acc, -bar_b, N);
 
@@ -34,7 +34,7 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
         }
     }
     
-    delete temp_acc; // Clean up
+    delete temp_acc; 
 
     auto br_end = std::chrono::high_resolution_clock::now();
     double br_total = std::chrono::duration<double, std::milli>(br_end - br_start).count();

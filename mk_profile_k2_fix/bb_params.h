@@ -24,13 +24,13 @@ struct BBIIParams {
         l = 3;
         Bgbit = 10;
 
-        // 【修正】C++のnewではなく、ライブラリの関数で生成する
+        // 中身のパラメータはライブラリ関数(new_...)で作る (メモリ整列のため)
         LweParams* lp = new_LweParams(n, lwe_alpha, 0.5); 
         TLweParams* tlp = new_TLweParams(N, 1, tlwe_alpha, 0.5); 
         TGswParams* tgp = new_TGswParams(l, Bgbit, tlp); 
         
-        // C-API のコンストラクタ関数を使用
-        tfhe_params = new_TFheGateBootstrappingParameterSet(10, 1, lp, tgp);
+        // 【修正】ここだけは C++ の new を使う (ライブラリに new_... 関数がないため)
+        tfhe_params = new TFheGateBootstrappingParameterSet(10, 1, lp, tgp);
     }
 };
 }

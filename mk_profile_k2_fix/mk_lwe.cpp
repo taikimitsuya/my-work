@@ -5,7 +5,7 @@
 
 namespace bbii {
 
-// 安全な乱数生成
+// 安全な乱数生成 (0以外を返すように)
 Torus32 get_rnd() { 
     uint32_t r1 = (uint32_t)rand();
     uint32_t r2 = (uint32_t)rand();

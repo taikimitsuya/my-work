@@ -5,7 +5,6 @@
 
 namespace bbii {
 
-// 安全な乱数生成
 Torus32 get_rnd() { 
     uint32_t r1 = (uint32_t)rand();
     uint32_t r2 = (uint32_t)rand();
@@ -14,20 +13,25 @@ Torus32 get_rnd() {
 
 void mk_lwe_sym_encrypt(MKLweSample* res, Torus32 msg, const MKSecretKey* sk, int32_t pid, const TFheGateBootstrappingParameterSet* p) {
     auto start = std::chrono::high_resolution_clock::now();
-    
     static bool seeded = false;
     if(!seeded) { srand(12345); seeded = true; }
 
-    int32_t n=res->n_per_party; int32_t offset=pid*n; Torus32 prod=0;
+    int32_t n=res->n_per_party; int32_t offset=pid*n; 
+    
+    // 【対策】積算を unsigned で行い、最後にキャストすることでUBを回避する
+    uint32_t prod_u = 0; 
     
     for(int i=0;i<res->k*n;++i) res->sample->a[i]=0;
     
     for(int i=0;i<n;++i){ 
-        Torus32 a=get_rnd(); 
-        res->sample->a[offset+i]=a; 
-        if(sk->lwe_key->key[i]) prod+=a; 
+        Torus32 a = get_rnd(); 
+        res->sample->a[offset+i] = a; 
+        if(sk->lwe_key->key[i]) {
+            prod_u += (uint32_t)a; // ここで安全にオーバーフローさせる
+        }
     }
     
+    Torus32 prod = (Torus32)prod_u;
     res->sample->b = prod + msg + gaussian32(0, p->in_out_params->alpha_min);
     res->sample->current_variance = 0.0; 
 

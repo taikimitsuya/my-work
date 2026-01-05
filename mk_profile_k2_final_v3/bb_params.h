@@ -2,8 +2,10 @@
 #define BB_PARAMS_H
 #include <cmath>
 #include <vector>
-#include <tfhe/tfhe.h>
-#include <tfhe/tfhe_core.h>
+
+// 【修正】ご指摘に合わせてパスを変更
+#include <tfhe.h>
+#include <tfhe_core.h>
 
 namespace bbii {
 struct BBIIParams {
@@ -24,13 +26,13 @@ struct BBIIParams {
         l = 3;
         Bgbit = 10;
 
-        // 【修正】C++のnewではなく、ライブラリの関数で生成する
+        // 内部パラメータはC関数で作る (メモリ配置のため)
         LweParams* lp = new_LweParams(n, lwe_alpha, 0.5); 
         TLweParams* tlp = new_TLweParams(N, 1, tlwe_alpha, 0.5); 
         TGswParams* tgp = new_TGswParams(l, Bgbit, tlp); 
         
-        // C-API のコンストラクタ関数を使用
-        tfhe_params = new_TFheGateBootstrappingParameterSet(10, 1, lp, tgp);
+        // C++のコンストラクタを使用 (new_...関数が見つからないエラー回避)
+        tfhe_params = new TFheGateBootstrappingParameterSet(10, 1, lp, tgp);
     }
 };
 }

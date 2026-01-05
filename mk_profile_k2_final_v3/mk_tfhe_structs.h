@@ -3,8 +3,10 @@
 #include <vector>
 #include <iostream>
 #include "bb_params.h"
-#include <tfhe/tfhe.h>
-#include <tfhe/tfhe_core.h>
+
+// 【修正】インクルードパス
+#include <tfhe.h>
+#include <tfhe_core.h>
 
 namespace bbii {
 struct MKRLweSample {
@@ -13,12 +15,10 @@ struct MKRLweSample {
         this->k = parties; this->N = params->tgsw_params->tlwe_params->N;
         this->parts = new TorusPolynomial*[k + 1];
         for (int i = 0; i <= k; ++i) { 
-            // 【修正】new_TorusPolynomial を使用
             this->parts[i] = new_TorusPolynomial(N); 
             torusPolynomialClear(this->parts[i]); 
         }
     }
-    // デストラクタでのクラッシュ回避のため、今回は明示的な解放を省略(OSに任せる)
     ~MKRLweSample() { }
 };
 
@@ -31,22 +31,15 @@ struct MKLweSample {
         sample = new_LweSample(params->in_out_params);
         int32_t total_n = k * n;
         
-        // 独自配列への差し替え
+        // 配列差し替え
         my_array = new int32_t[total_n]; 
-        // 元の配列ポインタを保存せず上書きするとリークするが、クラッシュはしない
-        // delete時にfree(my_array)されないように注意が必要
-        // sample->a は free() で解放されるべきだが、my_array は new[] なので不整合が起きる
-        // よって、sample->a に代入して使用するが、デストラクタでは何もしないのが安全
         sample->a = my_array;
 
         for(int i=0; i<total_n; ++i) sample->a[i] = 0;
         sample->b = 0; sample->current_variance = 0.0;
     }
     ~MKLweSample() { 
-        // 安全のため、sampleポインタの解放処理をスキップする
-        // (本来は元に戻してから delete_LweSample だが、複雑化を避ける)
-        sample = nullptr; 
-        my_array = nullptr;
+        sample->a = nullptr; 
     }
 };
 

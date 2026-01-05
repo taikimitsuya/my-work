@@ -10,7 +10,7 @@ using namespace std;
 MKProfiler global_profiler;
 
 int main() {
-    cout << "=== MK-TFHE Time Profiling (k=2) FIXED ===" << endl;
+    cout << "=== MK-TFHE Time Profiling (k=2) ===" << endl;
     
     int32_t k = 2; 
     int32_t d = 3; 

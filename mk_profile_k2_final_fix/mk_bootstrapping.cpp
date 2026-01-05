@@ -3,15 +3,26 @@
 #include <cmath>
 #include <iostream>
 #include <chrono>
-#include <tfhe/tfhe.h>
-#include <tfhe/tfhe_core.h>
-#include <tfhe/polynomials.h>
+#include <tfhe.h>
+#include <tfhe_core.h>
+#include <polynomials.h>
 
 namespace bbii {
 void mk_cmux(MKRLweSample*, const TGswSampleFFT*, const MKRLweSample*, const MKRLweSample*, int32_t, const TFheGateBootstrappingParameterSet*);
 void mk_rlwe_clear(MKRLweSample*); 
 void mk_rlwe_copy(MKRLweSample*, const MKRLweSample*);
-void mk_mul_xai(MKRLweSample* r, const MKRLweSample* s, int32_t b, int32_t N){ for(int i=0;i<=s->k;++i) torusPolynomialMulByXai(r->parts[i], b, s->parts[i]); }
+void mk_mul_xai(MKRLweSample* r, const MKRLweSample* s, int32_t b, int32_t N){
+    for(int i=0;i<=s->k;++i) {
+        if (r->parts[i]->N != s->parts[i]->N) {
+            TorusPolynomial* old = r->parts[i];
+            r->parts[i] = new_TorusPolynomial(s->parts[i]->N);
+            torusPolynomialClear(r->parts[i]);
+            delete_TorusPolynomial(old);
+        }
+        torusPolynomialMulByXai(r->parts[i], b, s->parts[i]);
+    }
+    r->N = s->N;
+}
 
 void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
     auto br_start = std::chrono::high_resolution_clock::now();
@@ -19,7 +30,7 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
     int32_t k=acc->k, n=mk_bk->n_per_party, N=acc->N, _2N=2*N;
     int32_t bar_b = modSwitchFromTorus32(bk_input->sample->b, _2N);
     
-    MKRLweSample* temp_acc = new MKRLweSample(k, params); // Heap alloc
+    MKRLweSample* temp_acc = new MKRLweSample(k, params); 
     mk_rlwe_copy(temp_acc, acc);
     mk_mul_xai(acc, temp_acc, -bar_b, N);
 
@@ -34,7 +45,7 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
         }
     }
     
-    delete temp_acc; // Clean up
+    delete temp_acc; 
 
     auto br_end = std::chrono::high_resolution_clock::now();
     double br_total = std::chrono::duration<double, std::milli>(br_end - br_start).count();

@@ -10,7 +10,7 @@ using namespace std;
 MKProfiler global_profiler;
 
 int main() {
-    cout << "=== MK-TFHE Time Profiling (k=2) FIXED ===" << endl;
+    cout << "=== MK-TFHE Time Profiling (k=2) FIXED FINAL ===" << endl;
     
     int32_t k = 2; 
     int32_t d = 3; 
@@ -44,7 +44,7 @@ int main() {
 
     bbii::MKLweSample* out = new bbii::MKLweSample(k, N, mp->get_tfhe_params());
     
-    cout << "Running Bootstrapping (This will take time)..." << endl;
+    cout << "Running Bootstrapping..." << endl;
     auto bs_start = std::chrono::high_resolution_clock::now();
     bbii::mk_bootstrapping(out, in, bk, 1000, mp->get_tfhe_params());
     auto bs_end = std::chrono::high_resolution_clock::now();
