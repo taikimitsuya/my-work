@@ -26,6 +26,8 @@ void mk_mul_xai(MKRLweSample* r, const MKRLweSample* s, int32_t b, int32_t N){
 
 void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
     auto br_start = std::chrono::high_resolution_clock::now();
+    // Blind Rotate内でのexternal_product合計のみを差分で計測
+    double extprod_start = global_profiler.time_external_product;
 
     int32_t k=acc->k, n=mk_bk->n_per_party, N=acc->N, _2N=2*N;
     int32_t bar_b = modSwitchFromTorus32(bk_input->sample->b, _2N);
@@ -51,11 +53,15 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
 
     auto br_end = std::chrono::high_resolution_clock::now();
     double br_total = std::chrono::duration<double, std::milli>(br_end - br_start).count();
-    global_profiler.time_blind_rotate_control = br_total - global_profiler.time_external_product;
+    double extprod_end = global_profiler.time_external_product;
+    double extprod_diff = extprod_end - extprod_start;
+    // Blind Rotate (Control) = Blind Rotate全体 - Blind Rotate内でのexternal_product合計
+    global_profiler.time_blind_rotate_control = br_total - extprod_diff;
 }
 
 void mk_sample_extract(MKLweSample* output, const MKRLweSample* acc, const LweParams* lwe_params) {
     auto start = std::chrono::high_resolution_clock::now();
+    double extract0 = global_profiler.time_sample_extract;
 
     int32_t k = acc->k; int32_t N = acc->N;
     output->sample->b = acc->parts[k]->coefsT[0];
@@ -65,17 +71,20 @@ void mk_sample_extract(MKLweSample* output, const MKRLweSample* acc, const LwePa
     }
 
     auto end = std::chrono::high_resolution_clock::now();
-    global_profiler.time_sample_extract += std::chrono::duration<double, std::milli>(end - start).count();
+    double extract1 = global_profiler.time_sample_extract;
+    global_profiler.time_sample_extract = (extract1 - extract0) + std::chrono::duration<double, std::milli>(end - start).count();
 }
 
 void mk_bootstrapping(MKLweSample* res, const MKLweSample* in, const MKBootstrappingKey* bk, Torus32 mu, const TFheGateBootstrappingParameterSet* p) {
     auto pack_start = std::chrono::high_resolution_clock::now();
+    double pack0 = global_profiler.time_input_packing;
     int32_t k=in->k;
     MKRLweSample* acc=new MKRLweSample(k,p); 
     mk_rlwe_clear(acc); 
     acc->parts[k]->coefsT[0]=mu;
     auto pack_end = std::chrono::high_resolution_clock::now();
-    global_profiler.time_input_packing += std::chrono::duration<double, std::milli>(pack_end - pack_start).count();
+    double pack1 = global_profiler.time_input_packing;
+    global_profiler.time_input_packing = (pack1 - pack0) + std::chrono::duration<double, std::milli>(pack_end - pack_start).count();
 
     mk_blind_rotate(acc, in, bk, p);
 

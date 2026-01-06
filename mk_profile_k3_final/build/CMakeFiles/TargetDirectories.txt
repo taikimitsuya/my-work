@@ -1,0 +1,3 @@
+/workspaces/my-work/mk_profile_k3_final/build/CMakeFiles/main_mk_test.dir
+/workspaces/my-work/mk_profile_k3_final/build/CMakeFiles/edit_cache.dir
+/workspaces/my-work/mk_profile_k3_final/build/CMakeFiles/rebuild_cache.dir
