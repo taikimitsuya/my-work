@@ -20,8 +20,11 @@ struct MKRLweSample {
     }
     ~MKRLweSample() { 
         if (this->parts) {
-            for (int i = 0; i <= k; ++i) {
-                if (this->parts[i]) delete_TorusPolynomial(this->parts[i]);
+            for (int i = 0; i <= k; ++i) { 
+                if (this->parts[i]) {
+                    delete_TorusPolynomial(this->parts[i]);
+                    this->parts[i] = nullptr;
+                }
             }
             delete[] this->parts;
             this->parts = nullptr;

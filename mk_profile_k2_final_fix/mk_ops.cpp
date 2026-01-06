@@ -12,6 +12,7 @@
 namespace bbii {
 void mk_rlwe_clear(MKRLweSample* r){ for(int i=0;i<=r->k;++i) torusPolynomialClear(r->parts[i]); }
 void mk_rlwe_copy(MKRLweSample* d, const MKRLweSample* s){
+    if (d == s) return; // no-op for self-copy
     for(int i=0;i<=d->k;++i){
         torusPolynomialCopy(d->parts[i], s->parts[i]);
     }
