@@ -16,7 +16,7 @@ struct BBIIParams {
     int32_t Bgbit;
 
     BBIIParams(int32_t d_val, int32_t rho_val, int32_t N_val) : d(d_val), rho(rho_val), N(N_val) {
-        n = static_cast<int32_t>(2 * std::pow(d, rho)); r = N / 2;
+        n = 2 * std::pow(d, rho); r = N / 2;
         lwe_alpha = 2.4e-5; tlwe_alpha = 3.7e-9;
         l = 3; Bgbit = 10;
 

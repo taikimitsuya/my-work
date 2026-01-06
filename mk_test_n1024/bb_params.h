@@ -10,7 +10,8 @@ struct BBIIParams {
     TFheGateBootstrappingParameterSet* tfhe_params;
     BBIIParams(int32_t d_val, int32_t rho_val, int32_t N_val) : d(d_val), rho(rho_val), N(N_val) {
         // N=1024用の標準的なパラメータ設定
-        n = 500; 
+        // BBII: n = 2 * d^rho
+        n = 2 * std::pow(d, rho);
         r = N / 2;
         LweParams* lp=new_LweParams(n, 2.4e-5, 0.5); 
         TLweParams* tlp=new_TLweParams(N, 1, 3.7e-9, 0.5); // N=1024 noise

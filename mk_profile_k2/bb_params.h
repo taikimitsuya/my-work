@@ -9,7 +9,8 @@ struct BBIIParams {
     int32_t n; int32_t N; int32_t d; int32_t rho; int32_t r;
     TFheGateBootstrappingParameterSet* tfhe_params;
     BBIIParams(int32_t d_val, int32_t rho_val, int32_t N_val) : d(d_val), rho(rho_val), N(N_val) {
-        n = 500; r = N / 2;
+        // BBII: n = 2 * d^rho
+        n = 2 * std::pow(d, rho); r = N / 2;
         LweParams* lp=new_LweParams(n, 2.4e-5, 0.5); 
         TLweParams* tlp=new_TLweParams(N, 1, 3.7e-9, 0.5); 
         TGswParams* tgp=new_TGswParams(3, 10, tlp); 

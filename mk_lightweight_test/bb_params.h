@@ -10,7 +10,8 @@ struct BBIIParams {
     TFheGateBootstrappingParameterSet* tfhe_params;
     BBIIParams(int32_t d_val, int32_t rho_val, int32_t N_val) : d(d_val), rho(rho_val), N(N_val) {
         // 軽量化のためパラメータ調整
-        n = 500; // 強制的に小さく
+        // BBII: n = 2 * d^rho
+        n = 2 * std::pow(d, rho); // 強制的に小さく
         r = N / 2;
         LweParams* lp=new_LweParams(n,3.0e-5,0.5); 
         TLweParams* tlp=new_TLweParams(N,1,9.0e-9,0.5);

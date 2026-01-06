@@ -1,15 +1,18 @@
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 #include "mk_methods.h" 
 using namespace std;
 int main() {
-    cout << "=== MK-TFHE Test (k=4, N=1024) ===" << endl;
-    
-    // ★ ここを変更: k=4
-    int32_t k = 4; 
-    int32_t d = 3; 
-    int32_t rho = 4; 
-    int32_t N = 1024; 
+    int32_t k, rho;
+    int32_t d = 2; // fixed
+    int32_t N = 1024;
+    cout << "=== MK-TFHE Test ===" << endl;
+    cout << "パーティ数 k を入力してください: ";
+    cin >> k;
+    cout << "パラメータ rho を入力してください: ";
+    cin >> rho;
+    cout << "(d=2, N=1024 固定)" << endl;
     
     cout << "Params: N=" << N << ", k=" << k << endl;
     cout << "Note: This will require significant memory and time." << endl;

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include <vector>
 #include <chrono>
 #include <iomanip>
@@ -10,12 +11,15 @@ using namespace std;
 MKProfiler global_profiler;
 
 int main() {
-    cout << "=== MK-TFHE Time Profiling (k=2) ===" << endl;
-    
-    int32_t k = 2; 
-    int32_t d = 3; 
-    int32_t rho = 2; 
-    int32_t N = 1024; 
+    int32_t k, rho;
+    int32_t d = 2; // fixed
+    int32_t N = 1024;
+    cout << "=== MK-TFHE Time Profiling ===" << endl;
+    cout << "パーティ数 k を入力してください: ";
+    cin >> k;
+    cout << "パラメータ rho を入力してください: ";
+    cin >> rho;
+    cout << "(d=2, N=1024 固定)" << endl;
     
     cout << "Initializing Params..." << endl;
     bbii::MKParams* mp = bbii::get_mk_test_params(k, d, rho, N);
