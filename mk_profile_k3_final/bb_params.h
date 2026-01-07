@@ -26,7 +26,9 @@ struct BBIIParams {
 
         // Use default TFHE parameter set (128-bit security) to avoid initialization issues
         // The default set is well-tested and handles integer overflow properly
-        tfhe_params = new_default_gate_bootstrapping_parameters(128);
+        // tfhe_params = new_default_gate_bootstrapping_parameters(128);
+
+        tfhe_params = new_default_gate_bootstrapping_parameters(n);
         
         // NOTE: This uses TFHE's built-in secure defaults instead of manual construction
         // which avoids parameter mismatches that can cause integer overflow in tGswAddMuIntH
