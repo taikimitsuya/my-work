@@ -101,9 +101,9 @@ struct MKBootstrappingKey {
         for(int i=0; i<k; ++i){ 
             bk_packed[i].resize(n); 
             for(int j=0; j<n; ++j){ 
-                // BBIIの文脈では、BKは通常 R12 -> R13 などのKeySwitchingモードを持つことが多いですが、
-                // ここでは初期値として R12_TO_R13 を設定（必要に応じて変更してください）
-                bk_packed[i][j] = new MKPackedRGSW(params, BBIIMode::R12_TO_R13); 
+                // jの偶奇でモードを交互に切り替え
+                BBIIMode mode = (j % 2 == 0) ? BBIIMode::R12_TO_R13 : BBIIMode::R13_TO_R12;
+                bk_packed[i][j] = new MKPackedRGSW(params, mode); 
             } 
         }
     }
