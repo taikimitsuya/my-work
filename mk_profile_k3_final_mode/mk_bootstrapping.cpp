@@ -1,5 +1,6 @@
 #include "mk_methods.h"
 #include "mk_profiler.h"
+#include "mk_ops.h"
 #include <cmath>
 #include <iostream>
 #include <chrono>
@@ -57,21 +58,14 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
             for (int j = 0; j < n; ++j) { // 各ビット
                 std::cout << "[DEBUG] j=" << j << std::endl;
                 // ここでアクセスする配列や関数呼び出しの前後にデバッグ出力を追加
-                std::cout << "[DEBUG] before mk_vec_mat_mult: ell=" << ell << ", u=" << u << ", j=" << j << std::endl;
-                // ...（本来の処理や関数呼び出しがここに入る想定）...
-                std::cout << "[DEBUG] after mk_vec_mat_mult: ell=" << ell << ", u=" << u << ", j=" << j << std::endl;
-                std::cout << "[DEBUG] before aij access: u=" << u << ", j=" << j << ", n=" << n << std::endl;
+                // --- 外部積（External Product）によるacc更新 ---
                 int32_t aij = bk_input->sample->a[u*n+j];
-                std::cout << "[DEBUG] aij=" << aij << std::endl;
                 int32_t digit = (aij >> (ell * 10)) & (B - 1); // 10bitごとに分解
-                std::cout << "[DEBUG] digit=" << digit << std::endl;
                 if (digit == 0) continue;
-                std::cout << "[DEBUG] before bk_packed access: u=" << u << ", j=" << j << std::endl;
-                auto* packed_ptr = mk_bk->bk_packed[u][j];
-                std::cout << "[DEBUG] bk_packed ptr=" << packed_ptr << std::endl;
-                std::cout << "[DEBUG] before mk_vec_mat_mult call" << std::endl;
-                mk_vec_mat_mult(acc, packed_ptr, digit, params);
-                std::cout << "[DEBUG] after mk_vec_mat_mult call" << std::endl;
+                // digit回、accに対してbk_packed[u][j]の外部積を適用
+                for (int rep = 0; rep < digit; ++rep) {
+                    mk_external_product(acc, mk_bk->bk_packed[u][j], acc, u, params);
+                }
             }
         }
     }
