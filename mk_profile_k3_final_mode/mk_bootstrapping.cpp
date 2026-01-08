@@ -32,27 +32,46 @@ void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBoo
     double extprod_start = global_profiler.time_external_product;
 
     int32_t k=acc->k, n=mk_bk->n_per_party, N=acc->N, _2N=2*N;
+    std::cout << "[DEBUG] mk_blind_rotate: k=" << k << ", n=" << n << ", N=" << N << std::endl;
     int32_t bar_b = modSwitchFromTorus32(bk_input->sample->b, _2N);
-    
+    std::cout << "[DEBUG] bar_b=" << bar_b << std::endl;
+
     MKRLweSample* temp_acc = new MKRLweSample(k, params);
+    std::cout << "[DEBUG] temp_acc allocated" << std::endl;
     mk_rlwe_copy(temp_acc, acc);
-    
+    std::cout << "[DEBUG] mk_rlwe_copy done" << std::endl;
+
     int32_t a0 = ((_2N - bar_b) % _2N);
+    std::cout << "[DEBUG] a0=" << a0 << std::endl;
     mk_mul_xai(acc, temp_acc, a0, N);
+    std::cout << "[DEBUG] mk_mul_xai done" << std::endl;
 
     // --- BBII論文 Algorithm 4.1 の3-4行目に相当する桁ごとの分解・行列積ループ ---
     // 例: L = log_B(q) 桁分解数, B = 基数, n = パーティごとのビット長
     const int L = 3; // 例: 桁数（パラメータに応じて調整）
     const int B = 1 << 10; // 例: 基数（パラメータに応じて調整）
     for (int ell = 0; ell < L; ++ell) { // 各桁ごと
+        std::cout << "[DEBUG] ell=" << ell << std::endl;
         for (int u = 0; u < k; ++u) { // 各参加者
+            std::cout << "[DEBUG] u=" << u << std::endl;
             for (int j = 0; j < n; ++j) { // 各ビット
-                // 桁ごとにbar_aを分解
+                std::cout << "[DEBUG] j=" << j << std::endl;
+                // ここでアクセスする配列や関数呼び出しの前後にデバッグ出力を追加
+                std::cout << "[DEBUG] before mk_vec_mat_mult: ell=" << ell << ", u=" << u << ", j=" << j << std::endl;
+                // ...（本来の処理や関数呼び出しがここに入る想定）...
+                std::cout << "[DEBUG] after mk_vec_mat_mult: ell=" << ell << ", u=" << u << ", j=" << j << std::endl;
+                std::cout << "[DEBUG] before aij access: u=" << u << ", j=" << j << ", n=" << n << std::endl;
                 int32_t aij = bk_input->sample->a[u*n+j];
+                std::cout << "[DEBUG] aij=" << aij << std::endl;
                 int32_t digit = (aij >> (ell * 10)) & (B - 1); // 10bitごとに分解
+                std::cout << "[DEBUG] digit=" << digit << std::endl;
                 if (digit == 0) continue;
-                // BBII: 各桁ごとにBKを適用
-                mk_vec_mat_mult(acc, mk_bk->bk_packed[u][j], digit, params);
+                std::cout << "[DEBUG] before bk_packed access: u=" << u << ", j=" << j << std::endl;
+                auto* packed_ptr = mk_bk->bk_packed[u][j];
+                std::cout << "[DEBUG] bk_packed ptr=" << packed_ptr << std::endl;
+                std::cout << "[DEBUG] before mk_vec_mat_mult call" << std::endl;
+                mk_vec_mat_mult(acc, packed_ptr, digit, params);
+                std::cout << "[DEBUG] after mk_vec_mat_mult call" << std::endl;
             }
         }
     }
@@ -102,8 +121,14 @@ void mk_bootstrapping(MKLweSample* res, const MKLweSample* in, const MKBootstrap
 
 // --- VecMatMultの雛形（再掲）---
 void mk_vec_mat_mult(MKRLweSample* acc, MKPackedRGSW* packed_bk, int32_t digit, const TFheGateBootstrappingParameterSet* params) {
+    std::cout << "[DEBUG] mk_vec_mat_mult: acc=" << acc << ", packed_bk=" << packed_bk << ", digit=" << digit << ", params=" << params << std::endl;
     // digitが0ならガジェット行列Gを使う
     MKPackedRGSW* op = nullptr;
+    if (!acc) { std::cout << "[DEBUG] acc is nullptr!" << std::endl; }
+    if (!packed_bk) { std::cout << "[DEBUG] packed_bk is nullptr!" << std::endl; }
+    if (!params) { std::cout << "[DEBUG] params is nullptr!" << std::endl; }
+    // ここから本来の処理の前後にもデバッグ出力を追加していくとよい
+    std::cout << "[DEBUG] packed_bk->sample=" << packed_bk->sample << ", packed_bk->mode=" << static_cast<int>(packed_bk->mode) << std::endl;
     if (digit == 0) {
         // マルチキー用ガジェット行列を生成
         op = mk_generate_gadget_rgsw(params, acc->k, packed_bk->mode);
@@ -111,6 +136,7 @@ void mk_vec_mat_mult(MKRLweSample* acc, MKPackedRGSW* packed_bk, int32_t digit, 
         // digit回加算（またはスカラー乗算）
         // ここでは単純にdigit回加算する例
         op = new MKPackedRGSW(*packed_bk); // コピー
+        std::cout << "[DEBUG] op(copy)->sample=" << op->sample << ", op->mode=" << static_cast<int>(op->mode) << std::endl;
         // 実際はdigit回加算やスカラー乗算に最適化可能
     }
     // accとopのBatch-Mult（RGSW×RGSW→RGSW）
@@ -131,14 +157,5 @@ void mk_batch_mult(MKPackedRGSW* acc, MKPackedRGSW* op, const TFheGateBootstrapp
     // }
 }
 
-// --- BBII: マルチキー用ガジェット行列生成関数の具体例 ---
-MKPackedRGSW* mk_generate_gadget_rgsw(const TFheGateBootstrappingParameterSet* params, int k, BBIIMode mode) {
-    // (k+1)次元のガジェット行列Gを生成し、MKPackedRGSWとして返す
-    MKPackedRGSW* gadget = new MKPackedRGSW(params, mode);
-    // 例: 各行にガジェットベクトル（[0, ..., 0, g]）をセット
-    // for (int i = 0; i <= k; ++i) {
-    //     set_gadget_vector(gadget->sample->all_sample[i], ...);
-    // }
-    return gadget;
-}
+// ...existing code...
 }
