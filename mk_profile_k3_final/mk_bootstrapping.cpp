@@ -40,15 +40,18 @@ void mk_blind_rotate(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBo
     int32_t a0 = ((_2N - bar_b) % _2N);
     mk_mul_xai(acc_packed->sample, acc_packed->sample, a0, N);
 
-    // BBII型ループ
-    for (int u = 0; u < k; ++u) {
-        if(u==0) std::cout << "  [Progress] Blind Rotate (BBII) loop start..." << std::endl;
-        for (int i = 0; i < n; ++i) {
+    // BBII型: iごとに全uのbk_packedをまとめて一括外部積
+    std::cout << "  [Progress] Blind Rotate (BBII) loop start..." << std::endl;
+    for (int i = 0; i < n; ++i) {
+        std::vector<MKPackedRGSW*> bk_vec;
+        std::vector<int32_t> coeff_vec;
+        for (int u = 0; u < k; ++u) {
             int32_t bar_ai = modSwitchFromTorus32(bk_input->parts[u]->coefsT[i], _2N);
             if (bar_ai == 0) continue;
-            // BBII型: MKPackedRGSW* → std::vector<MKPackedRGSW*>
-            std::vector<MKPackedRGSW*> bk_vec{mk_bk->bk_packed[u][i]};
-            std::vector<int32_t> coeff_vec{bar_ai};
+            bk_vec.push_back(mk_bk->bk_packed[u][i]);
+            coeff_vec.push_back(bar_ai);
+        }
+        if (!bk_vec.empty()) {
             mk_vec_mat_mult(acc_packed, bk_vec, coeff_vec, params);
         }
     }
