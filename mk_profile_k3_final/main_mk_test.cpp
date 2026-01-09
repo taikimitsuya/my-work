@@ -64,10 +64,10 @@ int main() {
         global_profiler.time_keygen = (keygen1 - keygen0) + std::chrono::duration<double, std::milli>(kg_end - kg_start).count();
 
         cout << "Encrypting..." << endl;
-        bbii::MKLweSample* in = new bbii::MKLweSample(k, mp->n_per_party, mp->get_tfhe_params());
-        bbii::mk_lwe_sym_encrypt(in, 1000, sks[0], 0, mp->get_tfhe_params());
+        bbii::MKRLweSample* in = new bbii::MKRLweSample(k, mp->get_tfhe_params());
+        bbii::mk_lwe_sym_encrypt(in, 1000, sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
 
-        bbii::MKLweSample* out = new bbii::MKLweSample(k, N, mp->get_tfhe_params());
+        bbii::MKRLweSample* out = new bbii::MKRLweSample(k, mp->get_tfhe_params());
         cout << "Running Bootstrapping (This will take time)..." << endl;
         auto bs_start = std::chrono::high_resolution_clock::now();
         bbii::mk_bootstrapping(out, in, bk, 1000, mp->get_tfhe_params());

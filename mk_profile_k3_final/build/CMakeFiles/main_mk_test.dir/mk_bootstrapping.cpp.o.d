@@ -212,9 +212,12 @@ CMakeFiles/main_mk_test.dir/mk_bootstrapping.cpp.o: \
  /workspaces/my-work/mk_profile_k3_final/../src/include/tfhe_io.h \
  /workspaces/my-work/mk_profile_k3_final/../src/include/tfhe_core.h \
  /workspaces/my-work/mk_profile_k3_final/mk_utils.h \
+ /workspaces/my-work/mk_profile_k3_final/../src/include/tgsw.h \
  /workspaces/my-work/mk_profile_k3_final/mk_params.h \
  /workspaces/my-work/mk_profile_k3_final/mk_profiler.h \
  /usr/include/c++/13/chrono /usr/include/c++/13/bits/chrono.h \
  /usr/include/c++/13/ratio /usr/include/c++/13/ctime \
  /usr/include/c++/13/bits/parse_numbers.h \
+ /workspaces/my-work/mk_profile_k3_final/mk_packed_ops.h \
+ /workspaces/my-work/mk_profile_k3_final/mk_ops.h \
  /workspaces/my-work/mk_profile_k3_final/../src/include/polynomials.h

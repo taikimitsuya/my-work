@@ -54,4 +54,10 @@ void mk_cmux(MKRLweSample* res, const TGswSampleFFT* bk, const MKRLweSample* in0
     mk_rlwe_copy(res, in0); 
     mk_rlwe_addTo(res, &prod);
 }
+
+// BBII型ラッパー: MKPackedRGSWのsampleメンバ（TGswSampleFFT*）を使う
+void mk_external_product(MKRLweSample* res, const MKPackedRGSW* rgsw, const MKRLweSample* acc, int32_t pid, const TFheGateBootstrappingParameterSet* params) {
+    const TGswSampleFFT* bk_fft = rgsw->sample;
+    mk_external_product(res, bk_fft, acc, pid, params);
+}
 } 

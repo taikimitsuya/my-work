@@ -225,6 +225,30 @@ mk_ops.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_ops.cpp.s
 .PHONY : mk_ops.cpp.s
 
+mk_packed_ops.o: mk_packed_ops.cpp.o
+.PHONY : mk_packed_ops.o
+
+# target to build an object file
+mk_packed_ops.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_packed_ops.cpp.o
+.PHONY : mk_packed_ops.cpp.o
+
+mk_packed_ops.i: mk_packed_ops.cpp.i
+.PHONY : mk_packed_ops.i
+
+# target to preprocess a source file
+mk_packed_ops.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_packed_ops.cpp.i
+.PHONY : mk_packed_ops.cpp.i
+
+mk_packed_ops.s: mk_packed_ops.cpp.s
+.PHONY : mk_packed_ops.s
+
+# target to generate assembly for a file
+mk_packed_ops.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_packed_ops.cpp.s
+.PHONY : mk_packed_ops.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -246,6 +270,9 @@ help:
 	@echo "... mk_ops.o"
 	@echo "... mk_ops.i"
 	@echo "... mk_ops.s"
+	@echo "... mk_packed_ops.o"
+	@echo "... mk_packed_ops.i"
+	@echo "... mk_packed_ops.s"
 .PHONY : help
 
 

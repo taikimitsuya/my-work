@@ -5,6 +5,8 @@
 #include <chrono>
 #include <tfhe.h>
 #include <tfhe_core.h>
+
+#include "mk_packed_ops.h"
 #include <polynomials.h>
 
 namespace bbii {
@@ -24,50 +26,53 @@ void mk_mul_xai(MKRLweSample* r, const MKRLweSample* s, int32_t b, int32_t N){
     r->N = s->N;
 }
 
-void mk_blind_rotate(MKRLweSample* acc, const MKLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
+void mk_blind_rotate(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
     auto br_start = std::chrono::high_resolution_clock::now();
-    // Blind Rotate内でのexternal_product合計のみを差分で計測
     double extprod_start = global_profiler.time_external_product;
 
     int32_t k=acc->k, n=mk_bk->n_per_party, N=acc->N, _2N=2*N;
-    int32_t bar_b = modSwitchFromTorus32(bk_input->sample->b, _2N);
-    
-    MKRLweSample* temp_acc = new MKRLweSample(k, params);
-    mk_rlwe_copy(temp_acc, acc);
-    
-    int32_t a0 = ((_2N - bar_b) % _2N);
-    mk_mul_xai(acc, temp_acc, a0, N);
+    int32_t bar_b = modSwitchFromTorus32(bk_input->parts[k]->coefsT[0], _2N);
 
-    for (int u = 0; u < k; ++u) { 
-        if(u==0) std::cout << "  [Progress] Blind Rotate loop start..." << std::endl;
-        for (int i = 0; i < n; ++i) { 
-            int32_t bar_ai = modSwitchFromTorus32(bk_input->sample->a[u*n+i], _2N);
+    // accをBBII用にラップ
+    MKPackedRLWE* acc_packed = new MKPackedRLWE(k, params, BBIIMode::R12);
+    mk_rlwe_copy(acc_packed->sample, acc);
+
+    int32_t a0 = ((_2N - bar_b) % _2N);
+    mk_mul_xai(acc_packed->sample, acc_packed->sample, a0, N);
+
+    // BBII型ループ
+    for (int u = 0; u < k; ++u) {
+        if(u==0) std::cout << "  [Progress] Blind Rotate (BBII) loop start..." << std::endl;
+        for (int i = 0; i < n; ++i) {
+            int32_t bar_ai = modSwitchFromTorus32(bk_input->parts[u]->coefsT[i], _2N);
             if (bar_ai == 0) continue;
-            
-            mk_mul_xai(temp_acc, acc, bar_ai, N);
-            mk_cmux(acc, mk_bk->bk_fft[u][i], acc, temp_acc, u, params);
+            // BBII型: MKPackedRGSW* → std::vector<MKPackedRGSW*>
+            std::vector<MKPackedRGSW*> bk_vec{mk_bk->bk_packed[u][i]};
+            std::vector<int32_t> coeff_vec{bar_ai};
+            mk_vec_mat_mult(acc_packed, bk_vec, coeff_vec, params);
         }
     }
-    
-    delete temp_acc; 
+
+    // 結果を書き戻す
+    mk_rlwe_copy(acc, acc_packed->sample);
+    delete acc_packed;
 
     auto br_end = std::chrono::high_resolution_clock::now();
     double br_total = std::chrono::duration<double, std::milli>(br_end - br_start).count();
     double extprod_end = global_profiler.time_external_product;
     double extprod_diff = extprod_end - extprod_start;
-    // Blind Rotate (Control) = Blind Rotate全体 - Blind Rotate内でのexternal_product合計
     global_profiler.time_blind_rotate_control = br_total - extprod_diff;
 }
 
-void mk_sample_extract(MKLweSample* output, const MKRLweSample* acc, const LweParams* lwe_params) {
+void mk_sample_extract(MKRLweSample* output, const MKRLweSample* acc, const LweParams* lwe_params) {
     auto start = std::chrono::high_resolution_clock::now();
     double extract0 = global_profiler.time_sample_extract;
 
     int32_t k = acc->k; int32_t N = acc->N;
-    output->sample->b = acc->parts[k]->coefsT[0];
+    output->parts[k]->coefsT[0] = acc->parts[k]->coefsT[0];
     for (int u = 0; u < k; ++u) {
         TorusPolynomial* poly = acc->parts[u];
-        for (int j = 0; j < N; ++j) { output->sample->a[u*N+j] = (j==0)? poly->coefsT[0] : -poly->coefsT[N-j]; }
+        for (int j = 0; j < N; ++j) { output->parts[u]->coefsT[j] = (j==0)? poly->coefsT[0] : -poly->coefsT[N-j]; }
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -75,7 +80,7 @@ void mk_sample_extract(MKLweSample* output, const MKRLweSample* acc, const LwePa
     global_profiler.time_sample_extract = (extract1 - extract0) + std::chrono::duration<double, std::milli>(end - start).count();
 }
 
-void mk_bootstrapping(MKLweSample* res, const MKLweSample* in, const MKBootstrappingKey* bk, Torus32 mu, const TFheGateBootstrappingParameterSet* p) {
+void mk_bootstrapping(MKRLweSample* res, const MKRLweSample* in, const MKBootstrappingKey* bk, Torus32 mu, const TFheGateBootstrappingParameterSet* p) {
     auto pack_start = std::chrono::high_resolution_clock::now();
     double pack0 = global_profiler.time_input_packing;
     int32_t k=in->k;

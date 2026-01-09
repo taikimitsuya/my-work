@@ -6,6 +6,14 @@
 #include <tfhe_core.h>
 
 namespace bbii {
+
+// [追加] BBIIモード管理用enum
+enum class BBIIMode {
+    R12,
+    R13,
+    R12_TO_R13,
+    R13_TO_R12
+};
 struct BBIIParams {
     int32_t n; int32_t N; int32_t d; int32_t rho; int32_t r;
     TFheGateBootstrappingParameterSet* tfhe_params;
