@@ -10,6 +10,7 @@ set(SOURCES
     mk_lwe.cpp
     mk_ops.cpp
     mk_packed_ops.cpp
+    mk_test_dummy.cpp
 )
 add_executable(main_mk_test ${SOURCES})
 

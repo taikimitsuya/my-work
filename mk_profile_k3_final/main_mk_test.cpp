@@ -11,6 +11,12 @@ using namespace std;
 MKProfiler global_profiler;
 
 int main() {
+        // DFTベースBlind Rotateのテスト呼び出し
+        extern void mk_test_blind_rotate_dft(const TFheGateBootstrappingParameterSet* params);
+        // テスト用パラメータセット（N=1024固定）
+        TFheGateBootstrappingParameterSet* test_params = new_default_gate_bootstrapping_parameters(110);
+        mk_test_blind_rotate_dft(test_params);
+        delete_gate_bootstrapping_parameters(test_params);
     int32_t k, rho;
     int32_t d = 2; // fixed
     int32_t N = 1024;

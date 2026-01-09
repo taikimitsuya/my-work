@@ -10,6 +10,37 @@
 #include <polynomials.h>
 
 namespace bbii {
+// DFTベースBlind Rotate（雛形・流れのみ）
+void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
+    int32_t k = acc->k, N = acc->N;
+    // 1. accをパック型にラップ
+    MKPackedRLWE* acc_packed = new MKPackedRLWE(k, params, BBIIMode::R12);
+    mk_rlwe_copy(acc_packed->sample, acc);
+
+    // 2. DFT行列生成
+    auto dft_mat = mk_create_dft_matrix(N, false);
+    auto idft_mat = mk_create_dft_matrix(N, true);
+
+    // 3. Homomorphic DFT
+    mk_homomorphic_dft(acc_packed, dft_mat);
+
+
+    // 4. Batch-Anti-Rot（テスト用ダミー: perm_key, kskをその場で生成）
+    // 実際はdeltaやbk_input等から適切なperm_key, kskを選択
+    std::vector<int> dummy_perm(N); for(int i=0;i<N;++i) dummy_perm[i]=i; // 恒等順列
+    MKPackedRGSW* perm_key = new MKPackedRGSW(params, BBIIMode::R12_TO_R13); // ダミー
+    MKKeySwitchKey* ksk = new MKKeySwitchKey(k, N, params); // ダミー
+    mk_batch_anti_rot(acc_packed, perm_key, ksk, params);
+    delete perm_key;
+    delete ksk;
+
+    // 5. Homomorphic IDFT
+    mk_homomorphic_idft(acc_packed, idft_mat);
+
+    // 6. 結果を書き戻す
+    mk_rlwe_copy(acc, acc_packed->sample);
+    delete acc_packed;
+}
 void mk_cmux(MKRLweSample*, const TGswSampleFFT*, const MKRLweSample*, const MKRLweSample*, int32_t, const TFheGateBootstrappingParameterSet*);
 void mk_rlwe_clear(MKRLweSample*); 
 void mk_rlwe_copy(MKRLweSample*, const MKRLweSample*);
@@ -67,36 +98,37 @@ void mk_blind_rotate(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBo
     global_profiler.time_blind_rotate_control = br_total - extprod_diff;
 }
 
-void mk_sample_extract(MKRLweSample* output, const MKRLweSample* acc, const LweParams* lwe_params) {
+void mk_sample_extract(MKRLweSample* output, const MKRLweSample* acc, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params, const LweParams* lwe_params) {
     auto start = std::chrono::high_resolution_clock::now();
     double extract0 = global_profiler.time_sample_extract;
 
-    int32_t k = acc->k; int32_t N = acc->N;
-    output->parts[k]->coefsT[0] = acc->parts[k]->coefsT[0];
-    for (int u = 0; u < k; ++u) {
-        TorusPolynomial* poly = acc->parts[u];
-        for (int j = 0; j < N; ++j) { output->parts[u]->coefsT[j] = (j==0)? poly->coefsT[0] : -poly->coefsT[N-j]; }
-    }
+    int32_t k = acc->k, N = acc->N;
+    MKPackedRLWE* acc_packed = new MKPackedRLWE(k, params, BBIIMode::R12);
+    mk_rlwe_copy(acc_packed->sample, acc);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    double extract1 = global_profiler.time_sample_extract;
-    global_profiler.time_sample_extract = (extract1 - extract0) + std::chrono::duration<double, std::milli>(end - start).count();
-}
+    // DFT/IDFT行列
+    auto dft_mat = mk_create_dft_matrix(N, false);
+    auto idft_mat = mk_create_dft_matrix(N, true);
 
-void mk_bootstrapping(MKRLweSample* res, const MKRLweSample* in, const MKBootstrappingKey* bk, Torus32 mu, const TFheGateBootstrappingParameterSet* p) {
-    auto pack_start = std::chrono::high_resolution_clock::now();
-    double pack0 = global_profiler.time_input_packing;
-    int32_t k=in->k;
-    MKRLweSample* acc=new MKRLweSample(k,p); 
-    mk_rlwe_clear(acc); 
-    acc->parts[k]->coefsT[0]=mu;
-    auto pack_end = std::chrono::high_resolution_clock::now();
-    double pack1 = global_profiler.time_input_packing;
-    global_profiler.time_input_packing = (pack1 - pack0) + std::chrono::duration<double, std::milli>(pack_end - pack_start).count();
+    // DFT
+    mk_homomorphic_dft(acc_packed, dft_mat);
 
-    mk_blind_rotate(acc, in, bk, p);
+    // delta, perm_key, kskの取得（例: delta=1の回転）
+    int delta = 1;
+    std::vector<int> permutation(N);
+    for(int i=0;i<N;++i) permutation[i] = (i+delta)%N;
+    // perm_key/kskをキャッシュ経由で取得
+    MKPackedRGSW* perm_key = bbii::get_perm_key_cached(const_cast<bbii::MKBootstrappingKey*>(mk_bk), permutation, params);
+    MKKeySwitchKey* ksk = bbii::get_ksk_cached(const_cast<bbii::MKBootstrappingKey*>(mk_bk), delta, k, N, params);
 
-    mk_sample_extract(res, acc, p->in_out_params);
-    delete acc;
+    // Batch-Anti-Rot
+    mk_batch_anti_rot(acc_packed, perm_key, ksk, params);
+
+    // IDFT
+    mk_homomorphic_idft(acc_packed, idft_mat);
+
+    mk_rlwe_copy(const_cast<MKRLweSample*>(acc), acc_packed->sample);
+
+    delete acc_packed;
 }
 } 
