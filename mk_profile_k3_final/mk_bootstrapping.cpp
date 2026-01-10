@@ -23,9 +23,18 @@ void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_i
 
     // 3. Homomorphic DFT
     // mk_homomorphic_dft(acc_packed, dft_mat); // ←従来のナイーブ版はコメントアウト
+    // DFT入力ベクトルをバッチ化（パディング）
+    int dft_size = 8; // 最小再帰サイズ（例）
     std::vector<MKPackedRLWE*> dft_inputs;
     dft_inputs.push_back(acc_packed);
+    for(int i=1; i<dft_size; ++i) {
+        MKPackedRLWE* dummy = new MKPackedRLWE(k, params, BBIIMode::R12);
+        mk_rlwe_clear(dummy->sample);
+        dft_inputs.push_back(dummy);
+    }
     bbii::mk_homomorphic_dft_recursive(dft_inputs, N, mk_bk, params);
+    // 結果の取り出し（0番目が処理結果）
+    for(int i=1; i<dft_size; ++i) delete dft_inputs[i];
 
 
     // 4. Batch-Anti-Rot（テスト用ダミー: perm_key, kskをその場で生成）

@@ -65,6 +65,12 @@ int main() {
             sks[i] = new bbii::MKSecretKey(mp->get_tfhe_params()); 
             bk->generateKeyForParty(i, sks[i], mp->get_tfhe_params()); 
         }
+        // KSK生成（Automorphism用KeySwitchingKeyを正しくセット）
+        // 例: delta=1用KSKを生成してキャッシュに登録
+        int delta = 1; // 必要に応じて変更
+        bbii::MKKeySwitchKey* ksk = new bbii::MKKeySwitchKey(k, mp->n_per_party, mp->get_tfhe_params());
+        bbii::mk_fill_automorphism_ksk(ksk, sks, mp->get_tfhe_params());
+        bk->ksk_cache[delta] = ksk;
         auto kg_end = std::chrono::high_resolution_clock::now();
         double keygen1 = global_profiler.time_keygen;
         global_profiler.time_keygen = (keygen1 - keygen0) + std::chrono::duration<double, std::milli>(kg_end - kg_start).count();

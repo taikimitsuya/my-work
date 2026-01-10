@@ -10,6 +10,24 @@
 #include <cmath>
 
 namespace bbii {
+// KSK生成: Automorphism後の鍵からKeySwitchingKeyを生成
+void mk_fill_automorphism_ksk(MKKeySwitchKey* ksk, const std::vector<MKSecretKey*>& sks, const TFheGateBootstrappingParameterSet* params) {
+    int32_t k = ksk->k;
+    int32_t N = ksk->N;
+    const LweParams* lwe_p = params->in_out_params;
+    for(int u = 0; u < k; ++u) {
+        // 入力鍵 s_in = s_u(X^-1) を作成
+        LweKey* s_in = new_LweKey(lwe_p);
+        LweKey* s_out = sks[u]->lwe_key;
+        // s_in の生成: s_out の係数を反転 (Automorphism: i -> N-i, 符号反転)
+        for(int i=0; i<N; ++i) {
+            s_in->key[i] = s_out->key[(N-i)%N];
+        }
+        // KSK生成: s_in -> s_out
+        lweCreateKeySwitchKey(ksk->ks_keys[u], s_in, s_out);
+        delete_LweKey(s_in);
+    }
+}
 // 内部ヘルパー: 単項式 X^power * scalar を多項式にセットする
 void set_monomial_scaled(TorusPolynomial* poly, int32_t power, int32_t scalar, int32_t N) {
     torusPolynomialClear(poly);
