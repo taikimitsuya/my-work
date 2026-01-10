@@ -10,9 +10,60 @@
 #include <cmath>
 
 namespace bbii {
-// 順列キー生成（雛形）
+// 内部ヘルパー: 単項式 X^power * scalar を多項式にセットする
+void set_monomial_scaled(TorusPolynomial* poly, int32_t power, int32_t scalar, int32_t N) {
+    torusPolynomialClear(poly);
+    // X^N = -1 の環での回転
+    int32_t p = power % (2 * N);
+    if (p < 0) p += 2 * N;
+    if (p < N) {
+        poly->coefsT[p] = scalar;
+    } else {
+        // X^{N+i} = -X^i
+        poly->coefsT[p - N] = -scalar;
+    }
+}
+
+// Permutation Key (Trivial RGSW of X^delta) の生成
 MKPackedRGSW* mk_create_permutation_key(const std::vector<int>& permutation, const TFheGateBootstrappingParameterSet* params) {
+    // 1. シフト量 delta の特定
+    int32_t N = params->in_out_params->n;
+    int32_t delta = 0;
+    if (!permutation.empty()) {
+        delta = permutation[0];
+    }
+
     MKPackedRGSW* key = new MKPackedRGSW(params, BBIIMode::R12_TO_R13);
+
+    TGswParams* tgsw_params = params->tgsw_params;
+    TGswSample* temp_rgsw = new_TGswSample(tgsw_params);
+
+    int32_t l = tgsw_params->l;
+    int32_t Bgbit = tgsw_params->Bgbit;
+    int32_t tfhe_k = tgsw_params->tlwe_params->k;
+
+    for (int32_t bloc = 0; bloc <= tfhe_k; ++bloc) {
+        for (int32_t i = 0; i < l; ++i) {
+            int32_t row_idx = bloc * l + i;
+            int32_t shift = 32 - (i + 1) * Bgbit;
+            int32_t scalar = (shift >= 0) ? (1 << shift) : 0;
+            TLweSample* row_tlwe = &temp_rgsw->all_sample[row_idx];
+            for (int32_t j = 0; j < tfhe_k; ++j) {
+                torusPolynomialClear(&row_tlwe->a[j]);
+            }
+            if (bloc < tfhe_k) {
+                set_monomial_scaled(&row_tlwe->a[bloc], delta, scalar, N);
+                torusPolynomialClear(row_tlwe->b);
+            } else {
+                set_monomial_scaled(row_tlwe->b, delta, scalar, N);
+            }
+            row_tlwe->current_variance = 0;
+        }
+    }
+
+    // FFT変換
+    tGswToFFTConvert(key->sample, temp_rgsw, tgsw_params);
+    delete_TGswSample(temp_rgsw);
     return key;
 }
 // DFT/IDFT定数行列生成
@@ -95,12 +146,43 @@ void mk_poly_automorphism(TorusPolynomial* poly) {
 // Inv-Auto: Automorphism+KeySwitching
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params) {
     int32_t k = acc->sample->k;
+    int32_t N = acc->sample->N;
     // 1. Automorphism: 各成分に多項式反転を適用
     for (int i = 0; i <= k; ++i) {
         mk_poly_inv_auto_inplace(acc->sample->parts[i]);
     }
-    // 2. Key Switching: 恒等パススルー（本来はここでKSKを使う）
-    // ここではaccの内容をそのまま維持
+
+    // 2. Key Switching: s(X^-1) -> s(X)
+    // 結果を蓄積する一時変数
+    MKRLweSample* res = new MKRLweSample(k, params);
+    mk_rlwe_clear(res);
+
+    // b部分 (parts[0]) はKS不要なのでそのままコピー
+    torusPolynomialCopy(res->parts[0], acc->sample->parts[0]);
+
+    // 各パーティの a_i 部分を KeySwitching
+    for (int u = 1; u <= k; ++u) {
+        TorusPolynomial* poly_in = acc->sample->parts[u];
+        TorusPolynomial* poly_out = res->parts[u];
+        // 各係数について LWE Key Switching を実行
+        for (int i = 0; i < N; ++i) {
+            // LWEサンプルを構築
+            LweSample* lwe_tmp = new_LweSample(params->in_out_params);
+            lwe_tmp->a[0] = poly_in->coefsT[i];
+            lwe_tmp->b = 0;
+            lwe_tmp->current_variance = 0;
+            // KeySwitch: ksk->ks_keys[u-1] を使う
+            LweSample* lwe_out = new_LweSample(params->in_out_params);
+            lweKeySwitch(lwe_out, ksk->ks_keys[u-1], lwe_tmp, params->in_out_params->n, params->in_out_params->t, params->in_out_params->basebit);
+            // 結果をpoly_outに格納
+            poly_out->coefsT[i] = lwe_out->b;
+            delete_LweSample(lwe_tmp);
+            delete_LweSample(lwe_out);
+        }
+    }
+
+    mk_rlwe_copy(acc->sample, res);
+    delete res;
 }
 
 // Batch-Anti-Rot: 反巡回シフト（本体）
