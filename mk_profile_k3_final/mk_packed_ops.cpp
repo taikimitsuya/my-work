@@ -94,22 +94,15 @@ void mk_poly_automorphism(TorusPolynomial* poly) {
 
 // Inv-Auto: Automorphism+KeySwitching
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params) {
-    // 1. Automorphism (X -> X^-1)
-    for (int u = 0; u <= acc->sample->k; ++u) {
-        mk_poly_automorphism(acc->sample->parts[u]);
+    int32_t k = acc->sample->k;
+    // 1. Automorphism: 各成分に多項式反転を適用
+    for (int i = 0; i <= k; ++i) {
+        mk_poly_inv_auto_inplace(acc->sample->parts[i]);
     }
-    // 2. KeySwitching（ダミー: 実装例構造のみ）
-    // 実際には各パーティごとにRLWE KeySwitchingが必要
-    // ここでは構造のみ示す
-        MKRLweSample* temp_res = new MKRLweSample(acc->sample->k, params);
-    mk_rlwe_clear(temp_res);
-    // for (int u = 0; u <= acc->sample->k; ++u) {
-    //     mk_rlwe_keyswitch(temp_res, acc->sample->parts[u], ksk->ks_keys[u]);
-    // }
-        mk_rlwe_copy(acc->sample, temp_res);
-    delete temp_res;
+    // 2. Key Switching: 恒等パススルー（本来はここでKSKを使う）
+    // ここではaccの内容をそのまま維持
 }
-// ...existing code...
+
 // Batch-Anti-Rot: 反巡回シフト（本体）
 void mk_batch_anti_rot(MKPackedRLWE* acc, const MKPackedRGSW* perm_key, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params) {
     // 1. Batch-Permute (回転シフト)
@@ -205,4 +198,17 @@ void mk_vec_mat_mult(
     }
 }
 // namespace bbii
+}
+
+// 多項式の反転: P(X) → P(X^-1)
+void mk_poly_inv_auto_inplace(TorusPolynomial* poly) {
+    int32_t N = poly->N;
+    // 1. 配列を逆順にする (1 から N-1 まで)
+    for (int i = 1; i < N / 2; ++i) {
+        std::swap(poly->coefsT[i], poly->coefsT[N - i]);
+    }
+    // 2. 1次以上の係数の符号を反転する
+    for (int i = 1; i < N; ++i) {
+        poly->coefsT[i] = -poly->coefsT[i];
+    }
 }

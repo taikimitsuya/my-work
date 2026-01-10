@@ -1,4 +1,3 @@
-
 #ifndef MK_PACKED_OPS_H
 #define MK_PACKED_OPS_H
 
@@ -24,6 +23,9 @@ MKKeySwitchKey* mk_create_automorphism_ksk(int32_t k, int32_t N, const TFheGateB
 std::vector<std::vector<std::complex<double>>> mk_create_dft_matrix(int N, bool inverse = false);
 // 多項式のインデックス反転（Automorphism）
 void mk_poly_automorphism(TorusPolynomial* poly);
+
+// 多項式の反転: P(X) → P(X^-1)
+void mk_poly_inv_auto_inplace(TorusPolynomial* poly);
 
 // Inv-Auto: Automorphism+KeySwitching
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params);
@@ -71,6 +73,9 @@ MKKeySwitchKey* mk_create_automorphism_ksk(int32_t k, int32_t N, const TFheGateB
 std::vector<std::vector<std::complex<double>>> mk_create_dft_matrix(int N, bool inverse);
 // 多項式のインデックス反転（Automorphism）
 void mk_poly_automorphism(TorusPolynomial* poly);
+
+// 多項式の反転: P(X) → P(X^-1)
+void mk_poly_inv_auto_inplace(TorusPolynomial* poly);
 
 // Inv-Auto: Automorphism+KeySwitching
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params);
