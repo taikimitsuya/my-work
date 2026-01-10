@@ -11,7 +11,7 @@
 
 namespace bbii {
 // DFTベースBlind Rotate（雛形・流れのみ）
-void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
+void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_input, const bbii::MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
     int32_t k = acc->k, N = acc->N;
     // 1. accをパック型にラップ
     MKPackedRLWE* acc_packed = new MKPackedRLWE(k, params, BBIIMode::R12);

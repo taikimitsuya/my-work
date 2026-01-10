@@ -8,10 +8,10 @@ void mk_test_blind_rotate_dft(const TFheGateBootstrappingParameterSet* params) {
     // テスト用パラメータ
     int k = 2;
     bbii::MKRLweSample* acc = new bbii::MKRLweSample(k, params);
-    bbii::MKRLweSample* input = new bbii::MKRLweSample(k, params);
-    bbii::MKBootstrappingKey* bk = new bbii::MKBootstrappingKey(k, 64, params);
+    const bbii::MKRLweSample* input = new bbii::MKRLweSample(k, params);
+    const bbii::MKBootstrappingKey* bk = new bbii::MKBootstrappingKey(k, 64, params);
     // acc, input, bkの初期化は省略（必要に応じてテスト値をセット）
-    mk_blind_rotate_dft(acc, input, bk, params);
+    bbii::mk_blind_rotate_dft(acc, input, bk, params);
     std::cout << "[test] mk_blind_rotate_dft 完了" << std::endl;
     delete acc;
     delete input;

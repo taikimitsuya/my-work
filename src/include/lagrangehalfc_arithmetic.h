@@ -64,7 +64,13 @@ EXPORT void LagrangeHalfCPolynomialAddTo(
 	const LagrangeHalfCPolynomial* a);
 
 EXPORT void LagrangeHalfCPolynomialSubTo(
-	LagrangeHalfCPolynomial* accum, 
+	LagrangeHalfCPolynomial* accum,
+	const LagrangeHalfCPolynomial* a,
+	const LagrangeHalfCPolynomial* b);
+
+// 2引数版: accum -= a
+EXPORT void LagrangeHalfCPolynomialSubToSimple(
+	LagrangeHalfCPolynomial* accum,
 	const LagrangeHalfCPolynomial* a);
 
 EXPORT void LagrangeHalfCPolynomialAddMul(

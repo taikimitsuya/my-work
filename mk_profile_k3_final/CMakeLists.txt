@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SOURCES
     main_mk_test.cpp
     mk_bootstrapping.cpp
+    # mk_test_blind_rotate_dft.cpp
     mk_lwe.cpp
     mk_ops.cpp
     mk_packed_ops.cpp

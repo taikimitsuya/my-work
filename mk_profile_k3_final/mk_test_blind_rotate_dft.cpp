@@ -1,6 +1,6 @@
 #include "mk_tfhe_structs.h"
 #include "mk_packed_ops.h"
-#include "mk_bootstrapping.cpp"
+#include "mk_methods.h"
 #include <iostream>
 
 using namespace bbii;

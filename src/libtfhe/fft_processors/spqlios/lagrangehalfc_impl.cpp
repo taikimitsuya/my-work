@@ -194,7 +194,7 @@ EXPORT void LagrangeHalfCPolynomialAddTo(
 }    
 
 
-EXPORT void LagrangeHalfCPolynomialSubTo(
+EXPORT void LagrangeHalfCPolynomialSubToSimple(
         LagrangeHalfCPolynomial *accum,
         const LagrangeHalfCPolynomial *a) {
     LagrangeHalfCPolynomial_IMPL *result1 = (LagrangeHalfCPolynomial_IMPL *) accum;

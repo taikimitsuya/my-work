@@ -1293,9 +1293,9 @@ EXPORT void MKTGswExpandFFT_v2(MKTGswExpSampleFFT_v2 *resultFFT, const MKTGswUES
         }
         
         // x_i
-        LagrangeHalfCPolynomialSubTo(&resultFFT->x[parties*dg + j], X);
+        LagrangeHalfCPolynomialSubToSimple(&resultFFT->x[parties*dg + j], X);
         // y_i
-        LagrangeHalfCPolynomialSubTo(&resultFFT->y[parties*dg + j], Y);
+        LagrangeHalfCPolynomialSubToSimple(&resultFFT->y[parties*dg + j], Y);
     }   
     
 

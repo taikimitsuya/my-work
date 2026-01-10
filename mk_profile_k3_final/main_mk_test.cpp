@@ -84,7 +84,7 @@ int main() {
         cout << "==================================" << endl;
         cout << "         [Time Profile]           " << endl;
         cout << "==================================" << endl;
-        cout << fixed << setprecision(2);
+        cout << fixed << setprecision(16);
         cout << "  0. Key Generation        : " << global_profiler.time_keygen << " ms" << endl;
         cout << "  --------------------------------" << endl;
         cout << "  1. Input Packing         : " << global_profiler.time_input_packing << " ms" << endl;
@@ -111,7 +111,7 @@ int main() {
     }
     cout << endl;
     cout << "===== [平均 Time Profile] =====" << endl;
-    cout << fixed << setprecision(2);
+    cout << fixed << setprecision(16);
     cout << "  0. Key Generation        : " << (sum_keygen/REPEAT) << " ms" << endl;
     cout << "  1. Input Packing         : " << (sum_inputpack/REPEAT) << " ms" << endl;
     cout << "  2. Blind Rotate (Control): " << (sum_blind/REPEAT) << " ms" << endl;
