@@ -76,15 +76,28 @@ int main() {
         global_profiler.time_keygen = (keygen1 - keygen0) + std::chrono::duration<double, std::milli>(kg_end - kg_start).count();
 
         cout << "Encrypting..." << endl;
+        Torus32 plain = 1000;
         bbii::MKRLweSample* in = new bbii::MKRLweSample(k, mp->get_tfhe_params());
-        bbii::mk_lwe_sym_encrypt(in, 1000, sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
+        bbii::mk_lwe_sym_encrypt(in, plain, sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
 
         bbii::MKRLweSample* out = new bbii::MKRLweSample(k, mp->get_tfhe_params());
         cout << "Running Bootstrapping (This will take time)..." << endl;
         auto bs_start = std::chrono::high_resolution_clock::now();
-        bbii::mk_bootstrapping(out, in, bk, 1000, mp->get_tfhe_params());
+        bbii::mk_bootstrapping(out, in, bk, plain, mp->get_tfhe_params());
         auto bs_end = std::chrono::high_resolution_clock::now();
         double total_bs_time = std::chrono::duration<double, std::milli>(bs_end - bs_start).count();
+
+        // 復号
+        Torus32 decrypted = bbii::mk_lwe_decrypt(out, sks, mp->get_tfhe_params());
+        cout << endl;
+        cout << "[Decryption Check]" << endl;
+        cout << "  Original Plaintext : " << plain << endl;
+        cout << "  Decrypted Value    : " << decrypted << endl;
+        if (plain == decrypted) {
+            cout << "  [OK] Decryption matches original plaintext." << endl;
+        } else {
+            cout << "  [NG] Decryption does NOT match original plaintext!" << endl;
+        }
 
         cout << endl;
         cout << "==================================" << endl;

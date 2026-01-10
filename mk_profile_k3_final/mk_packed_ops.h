@@ -7,6 +7,8 @@
 #include "mk_ops.h"
 
 namespace bbii {
+// KSK生成: Automorphism後の鍵からKeySwitchingKeyを生成
+void mk_fill_automorphism_ksk(MKKeySwitchKey* ksk, const std::vector<MKSecretKey*>& sks, const TFheGateBootstrappingParameterSet* params);
 struct MKPackedRLWE;
 struct MKPackedRGSW;
 struct MKKeySwitchKey;
