@@ -7,6 +7,13 @@
 #include "mk_ops.h"
 
 namespace bbii {
+void mk_apply_inv_twiddle(MKPackedRLWE* acc, int32_t power, int32_t N, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params);
+void mk_homomorphic_idft_recursive(
+	std::vector<MKPackedRLWE*>& inputs,
+	int32_t N,
+	const MKBootstrappingKey* mk_bk,
+	const TFheGateBootstrappingParameterSet* params
+);
 // KSK生成: Automorphism後の鍵からKeySwitchingKeyを生成
 void mk_fill_automorphism_ksk(MKKeySwitchKey* ksk, const std::vector<MKSecretKey*>& sks, const TFheGateBootstrappingParameterSet* params);
 struct MKPackedRLWE;

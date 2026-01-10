@@ -5,6 +5,7 @@
 #include <iomanip>
 #include "mk_methods.h"
 #include "mk_profiler.h"
+#include "mk_packed_ops.h"
 
 using namespace std;
 

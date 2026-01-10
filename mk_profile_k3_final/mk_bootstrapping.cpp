@@ -46,8 +46,16 @@ void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_i
     delete perm_key;
     delete ksk;
 
-    // 5. Homomorphic IDFT
-    mk_homomorphic_idft(acc_packed, idft_mat);
+    // 5. Homomorphic IDFT（再帰版）
+    std::vector<MKPackedRLWE*> idft_inputs;
+    idft_inputs.push_back(acc_packed);
+    for(int i=1; i<dft_size; ++i) {
+        MKPackedRLWE* dummy = new MKPackedRLWE(k, params, BBIIMode::R12);
+        mk_rlwe_clear(dummy->sample);
+        idft_inputs.push_back(dummy);
+    }
+    bbii::mk_homomorphic_idft_recursive(idft_inputs, N, mk_bk, params);
+    for(int i=1; i<dft_size; ++i) delete idft_inputs[i];
 
     // 6. 結果を書き戻す
     mk_rlwe_copy(acc, acc_packed->sample);

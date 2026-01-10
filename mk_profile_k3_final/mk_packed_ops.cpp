@@ -10,6 +10,37 @@
 #include <cmath>
 
 namespace bbii {
+// Twiddle Factorの逆（IDFT用）
+void mk_apply_inv_twiddle(MKPackedRLWE* acc, int32_t power, int32_t N, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
+    int32_t inv_power = (2 * N - power) % (2 * N);
+    mk_apply_twiddle(acc, inv_power, N, mk_bk, params);
+}
+
+// 再帰的IDFT（Gentleman-Sande型）
+void mk_homomorphic_idft_recursive(
+    std::vector<MKPackedRLWE*>& inputs,
+    int32_t N,
+    const MKBootstrappingKey* mk_bk,
+    const TFheGateBootstrappingParameterSet* params
+) {
+    size_t len = inputs.size();
+    if (len <= 1) return;
+    size_t half = len / 2;
+    std::vector<MKPackedRLWE*> upper, lower;
+    mk_slice(inputs, upper, lower);
+    // Butterfly Inverse
+    for (size_t k = 0; k < half; ++k) {
+        mk_butterfly(upper[k], lower[k], params);
+        int32_t rot = k * (N / len);
+        mk_apply_inv_twiddle(lower[k], rot, N, mk_bk, params);
+    }
+    mk_homomorphic_idft_recursive(upper, N, mk_bk, params);
+    mk_homomorphic_idft_recursive(lower, N, mk_bk, params);
+    for (size_t i = 0; i < half; ++i) {
+        mk_rlwe_copy(inputs[i]->sample, upper[i]->sample);
+        mk_rlwe_copy(inputs[i+half]->sample, lower[i]->sample);
+    }
+}
 // KSK生成: Automorphism後の鍵からKeySwitchingKeyを生成
 void mk_fill_automorphism_ksk(MKKeySwitchKey* ksk, const std::vector<MKSecretKey*>& sks, const TFheGateBootstrappingParameterSet* params) {
     int32_t k = ksk->k;
