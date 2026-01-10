@@ -26,13 +26,13 @@ void mk_poly_automorphism(TorusPolynomial* poly);
 
 // 多項式の反転: P(X) → P(X^-1)
 void mk_poly_inv_auto_inplace(TorusPolynomial* poly);
-
-// Inv-Auto: Automorphism+KeySwitching
+void mk_slice(const std::vector<bbii::MKPackedRLWE*>& input, std::vector<bbii::MKPackedRLWE*>& out_upper, std::vector<bbii::MKPackedRLWE*>& out_lower);
+void mk_butterfly(bbii::MKPackedRLWE* u, bbii::MKPackedRLWE* v, const TFheGateBootstrappingParameterSet* params);
+void mk_apply_twiddle(bbii::MKPackedRLWE* acc, int32_t power, int32_t N, const bbii::MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params);
+void mk_homomorphic_dft_recursive(std::vector<bbii::MKPackedRLWE*>& inputs, int32_t N, const bbii::MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params);
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params);
-// Homomorphic DFT/IDFT（雛形）
 void mk_homomorphic_dft(MKPackedRLWE* acc, const std::vector<std::vector<std::complex<double>>>& dft_matrix);
 void mk_homomorphic_idft(MKPackedRLWE* acc, const std::vector<std::vector<std::complex<double>>>& idft_matrix);
-// Batch-Anti-Rot: 反巡回シフト（本体）
 void mk_batch_anti_rot(MKPackedRLWE* acc, const MKPackedRGSW* perm_key, const MKKeySwitchKey* ksk, const TFheGateBootstrappingParameterSet* params);
 void mk_vec_mat_mult(
  MKPackedRLWE* acc,
@@ -46,6 +46,14 @@ void mk_batch_permute(MKPackedRLWE* acc, const MKPackedRGSW* perm_key, const TFh
 
 // Inv-Auto: インデックス反転（雛形）
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk);
+
+// 再帰的DFT（雛形）
+
+
+// ヘルパー関数
+void mk_slice(const std::vector<MKPackedRLWE*>& input, std::vector<MKPackedRLWE*>& out_upper, std::vector<MKPackedRLWE*>& out_lower);
+void mk_butterfly(MKPackedRLWE* u, MKPackedRLWE* v, const TFheGateBootstrappingParameterSet* params);
+void mk_apply_twiddle(MKPackedRLWE* acc, int32_t power, int32_t N, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params);
 
 } // namespace bbii
 
@@ -96,6 +104,10 @@ void mk_batch_permute(MKPackedRLWE* acc, const MKPackedRGSW* perm_key, const TFh
 
 // Inv-Auto: インデックス反転（雛形）
 void mk_inv_auto(MKPackedRLWE* acc, const MKKeySwitchKey* ksk);
+
+// 再帰的DFT（雛形）
+constexpr int BASE_SIZE = 8;
+void mk_homomorphic_dft_recursive(MKPackedRLWE* acc, int current_N, const TFheGateBootstrappingParameterSet* params);
 
 } // namespace bbii
 

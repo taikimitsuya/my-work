@@ -22,7 +22,10 @@ void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_i
     auto idft_mat = mk_create_dft_matrix(N, true);
 
     // 3. Homomorphic DFT
-    mk_homomorphic_dft(acc_packed, dft_mat);
+    // mk_homomorphic_dft(acc_packed, dft_mat); // ←従来のナイーブ版はコメントアウト
+    std::vector<MKPackedRLWE*> dft_inputs;
+    dft_inputs.push_back(acc_packed);
+    bbii::mk_homomorphic_dft_recursive(dft_inputs, N, mk_bk, params);
 
 
     // 4. Batch-Anti-Rot（テスト用ダミー: perm_key, kskをその場で生成）
@@ -131,4 +134,4 @@ void mk_sample_extract(MKRLweSample* output, const MKRLweSample* acc, const MKBo
 
     delete acc_packed;
 }
-} 
+}
