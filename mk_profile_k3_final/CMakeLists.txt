@@ -12,6 +12,9 @@ set(SOURCES
     mk_ops.cpp
     mk_packed_ops.cpp
     mk_test_dummy.cpp
+    mk_profiler.cpp
+    mk_params.cpp
+    mk_methods.cpp
 )
 add_executable(main_mk_test ${SOURCES})
 

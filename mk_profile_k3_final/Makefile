@@ -201,6 +201,30 @@ mk_lwe.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_lwe.cpp.s
 .PHONY : mk_lwe.cpp.s
 
+mk_methods.o: mk_methods.cpp.o
+.PHONY : mk_methods.o
+
+# target to build an object file
+mk_methods.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_methods.cpp.o
+.PHONY : mk_methods.cpp.o
+
+mk_methods.i: mk_methods.cpp.i
+.PHONY : mk_methods.i
+
+# target to preprocess a source file
+mk_methods.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_methods.cpp.i
+.PHONY : mk_methods.cpp.i
+
+mk_methods.s: mk_methods.cpp.s
+.PHONY : mk_methods.s
+
+# target to generate assembly for a file
+mk_methods.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_methods.cpp.s
+.PHONY : mk_methods.cpp.s
+
 mk_ops.o: mk_ops.cpp.o
 .PHONY : mk_ops.o
 
@@ -249,6 +273,54 @@ mk_packed_ops.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_packed_ops.cpp.s
 .PHONY : mk_packed_ops.cpp.s
 
+mk_params.o: mk_params.cpp.o
+.PHONY : mk_params.o
+
+# target to build an object file
+mk_params.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_params.cpp.o
+.PHONY : mk_params.cpp.o
+
+mk_params.i: mk_params.cpp.i
+.PHONY : mk_params.i
+
+# target to preprocess a source file
+mk_params.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_params.cpp.i
+.PHONY : mk_params.cpp.i
+
+mk_params.s: mk_params.cpp.s
+.PHONY : mk_params.s
+
+# target to generate assembly for a file
+mk_params.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_params.cpp.s
+.PHONY : mk_params.cpp.s
+
+mk_profiler.o: mk_profiler.cpp.o
+.PHONY : mk_profiler.o
+
+# target to build an object file
+mk_profiler.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o
+.PHONY : mk_profiler.cpp.o
+
+mk_profiler.i: mk_profiler.cpp.i
+.PHONY : mk_profiler.i
+
+# target to preprocess a source file
+mk_profiler.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_profiler.cpp.i
+.PHONY : mk_profiler.cpp.i
+
+mk_profiler.s: mk_profiler.cpp.s
+.PHONY : mk_profiler.s
+
+# target to generate assembly for a file
+mk_profiler.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_profiler.cpp.s
+.PHONY : mk_profiler.cpp.s
+
 mk_test_dummy.o: mk_test_dummy.cpp.o
 .PHONY : mk_test_dummy.o
 
@@ -291,12 +363,21 @@ help:
 	@echo "... mk_lwe.o"
 	@echo "... mk_lwe.i"
 	@echo "... mk_lwe.s"
+	@echo "... mk_methods.o"
+	@echo "... mk_methods.i"
+	@echo "... mk_methods.s"
 	@echo "... mk_ops.o"
 	@echo "... mk_ops.i"
 	@echo "... mk_ops.s"
 	@echo "... mk_packed_ops.o"
 	@echo "... mk_packed_ops.i"
 	@echo "... mk_packed_ops.s"
+	@echo "... mk_params.o"
+	@echo "... mk_params.i"
+	@echo "... mk_params.s"
+	@echo "... mk_profiler.o"
+	@echo "... mk_profiler.i"
+	@echo "... mk_profiler.s"
 	@echo "... mk_test_dummy.o"
 	@echo "... mk_test_dummy.i"
 	@echo "... mk_test_dummy.s"

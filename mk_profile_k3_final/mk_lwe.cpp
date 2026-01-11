@@ -6,7 +6,6 @@
 #include <chrono>
 #include <tfhe/tfhe.h>
 
-namespace bbii {
 
 Torus32 get_rnd() { 
     uint32_t r1 = (uint32_t)rand();
@@ -36,4 +35,3 @@ void mk_lwe_sym_encrypt(MKRLweSample* res, Torus32 msg, const MKSecretKey* sk, i
     global_profiler.time_encrypt += std::chrono::duration<double, std::milli>(end - start).count();
 }
 Torus32 mk_lwe_decrypt(const MKRLweSample* c, const std::vector<MKSecretKey*>& keys, const TFheGateBootstrappingParameterSet* p) { return c->parts[c->k]->coefsT[0]; }
-} 

@@ -17,5 +17,7 @@ struct MKProfiler {
         time_keygen = 0; time_encrypt = 0;
     }
 };
+#ifdef __cplusplus
 extern MKProfiler global_profiler;
+#endif
 #endif

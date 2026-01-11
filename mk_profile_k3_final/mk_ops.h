@@ -1,5 +1,3 @@
-
-
 #ifndef MK_OPS_H
 #define MK_OPS_H
 

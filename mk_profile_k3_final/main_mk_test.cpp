@@ -10,7 +10,7 @@
 #include "mk_profiler.h"
 
 
-MKProfiler global_profiler;
+
 
 int main() {
     // DFTベースBlind Rotateのテスト呼び出し（デバッグ用）
@@ -138,8 +138,10 @@ int main() {
         sum_total    += total_bs_time;
 
         // メモリ解放（必要に応じて）
-        delete in;
-        delete out;
+        for(int i=0;i<batch_size;++i) {
+            delete ins[i];
+            delete outs[i];
+        }
         for(int i=0;i<k;++i) delete sks[i];
         delete bk;
         delete mp;
@@ -155,5 +157,7 @@ int main() {
     std::cout << "----------------------------------" << std::endl;
     std::cout << "Total Execution Time       : " << (sum_total/REPEAT) << " ms" << std::endl;
     std::cout << "==================================" << std::endl;
+
+
     return 0;
 }

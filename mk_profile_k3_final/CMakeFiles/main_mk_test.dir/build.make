@@ -153,6 +153,48 @@ CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/my-work/mk_profile_k3_final/mk_test_dummy.cpp -o CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.s
 
+CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o: CMakeFiles/main_mk_test.dir/flags.make
+CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o: mk_profiler.cpp
+CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o: CMakeFiles/main_mk_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/workspaces/my-work/mk_profile_k3_final/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o -MF CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o.d -o CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o -c /workspaces/my-work/mk_profile_k3_final/mk_profiler.cpp
+
+CMakeFiles/main_mk_test.dir/mk_profiler.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main_mk_test.dir/mk_profiler.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/my-work/mk_profile_k3_final/mk_profiler.cpp > CMakeFiles/main_mk_test.dir/mk_profiler.cpp.i
+
+CMakeFiles/main_mk_test.dir/mk_profiler.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main_mk_test.dir/mk_profiler.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/my-work/mk_profile_k3_final/mk_profiler.cpp -o CMakeFiles/main_mk_test.dir/mk_profiler.cpp.s
+
+CMakeFiles/main_mk_test.dir/mk_params.cpp.o: CMakeFiles/main_mk_test.dir/flags.make
+CMakeFiles/main_mk_test.dir/mk_params.cpp.o: mk_params.cpp
+CMakeFiles/main_mk_test.dir/mk_params.cpp.o: CMakeFiles/main_mk_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/workspaces/my-work/mk_profile_k3_final/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/main_mk_test.dir/mk_params.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main_mk_test.dir/mk_params.cpp.o -MF CMakeFiles/main_mk_test.dir/mk_params.cpp.o.d -o CMakeFiles/main_mk_test.dir/mk_params.cpp.o -c /workspaces/my-work/mk_profile_k3_final/mk_params.cpp
+
+CMakeFiles/main_mk_test.dir/mk_params.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main_mk_test.dir/mk_params.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/my-work/mk_profile_k3_final/mk_params.cpp > CMakeFiles/main_mk_test.dir/mk_params.cpp.i
+
+CMakeFiles/main_mk_test.dir/mk_params.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main_mk_test.dir/mk_params.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/my-work/mk_profile_k3_final/mk_params.cpp -o CMakeFiles/main_mk_test.dir/mk_params.cpp.s
+
+CMakeFiles/main_mk_test.dir/mk_methods.cpp.o: CMakeFiles/main_mk_test.dir/flags.make
+CMakeFiles/main_mk_test.dir/mk_methods.cpp.o: mk_methods.cpp
+CMakeFiles/main_mk_test.dir/mk_methods.cpp.o: CMakeFiles/main_mk_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/workspaces/my-work/mk_profile_k3_final/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/main_mk_test.dir/mk_methods.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main_mk_test.dir/mk_methods.cpp.o -MF CMakeFiles/main_mk_test.dir/mk_methods.cpp.o.d -o CMakeFiles/main_mk_test.dir/mk_methods.cpp.o -c /workspaces/my-work/mk_profile_k3_final/mk_methods.cpp
+
+CMakeFiles/main_mk_test.dir/mk_methods.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main_mk_test.dir/mk_methods.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/my-work/mk_profile_k3_final/mk_methods.cpp > CMakeFiles/main_mk_test.dir/mk_methods.cpp.i
+
+CMakeFiles/main_mk_test.dir/mk_methods.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main_mk_test.dir/mk_methods.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/my-work/mk_profile_k3_final/mk_methods.cpp -o CMakeFiles/main_mk_test.dir/mk_methods.cpp.s
+
 # Object files for target main_mk_test
 main_mk_test_OBJECTS = \
 "CMakeFiles/main_mk_test.dir/main_mk_test.cpp.o" \
@@ -160,7 +202,10 @@ main_mk_test_OBJECTS = \
 "CMakeFiles/main_mk_test.dir/mk_lwe.cpp.o" \
 "CMakeFiles/main_mk_test.dir/mk_ops.cpp.o" \
 "CMakeFiles/main_mk_test.dir/mk_packed_ops.cpp.o" \
-"CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.o"
+"CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.o" \
+"CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o" \
+"CMakeFiles/main_mk_test.dir/mk_params.cpp.o" \
+"CMakeFiles/main_mk_test.dir/mk_methods.cpp.o"
 
 # External object files for target main_mk_test
 main_mk_test_EXTERNAL_OBJECTS =
@@ -171,10 +216,13 @@ main_mk_test: CMakeFiles/main_mk_test.dir/mk_lwe.cpp.o
 main_mk_test: CMakeFiles/main_mk_test.dir/mk_ops.cpp.o
 main_mk_test: CMakeFiles/main_mk_test.dir/mk_packed_ops.cpp.o
 main_mk_test: CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.o
+main_mk_test: CMakeFiles/main_mk_test.dir/mk_profiler.cpp.o
+main_mk_test: CMakeFiles/main_mk_test.dir/mk_params.cpp.o
+main_mk_test: CMakeFiles/main_mk_test.dir/mk_methods.cpp.o
 main_mk_test: CMakeFiles/main_mk_test.dir/build.make
 main_mk_test: /workspaces/my-work/tfhe/build/libtfhe/libtfhe_static.a
 main_mk_test: CMakeFiles/main_mk_test.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/workspaces/my-work/mk_profile_k3_final/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable main_mk_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/workspaces/my-work/mk_profile_k3_final/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable main_mk_test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main_mk_test.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

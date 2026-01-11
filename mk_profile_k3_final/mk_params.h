@@ -10,8 +10,7 @@ struct MKParams {
     }
     TFheGateBootstrappingParameterSet* get_tfhe_params() const { return sk_params->tfhe_params; }
 };
-MKParams* get_mk_test_params(int32_t k, int32_t d, int32_t rho, int32_t N) {
-    return new MKParams(k, new BBIIParams(d, rho, N));
-}
-#endif
+MKParams* get_mk_test_params(int32_t k, int32_t d, int32_t rho, int32_t N);
+// ...existing code...
+// #endif without #if 修正
 #endif

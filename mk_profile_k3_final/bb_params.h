@@ -12,6 +12,7 @@ enum class BBIIMode {
     R12_TO_R13,
     R13_TO_R12
 };
+
 struct BBIIParams {
     int32_t n; int32_t N; int32_t d; int32_t rho; int32_t r;
     TFheGateBootstrappingParameterSet* tfhe_params;
@@ -49,5 +50,5 @@ struct BBIIParams {
             tfhe_params = new_default_gate_bootstrapping_parameters(n);
         }
     }
-#endif
-#endif
+};
+#endif // BB_PARAMS_H

@@ -26,5 +26,4 @@ void mk_bootstrapping(MKRLweSample* result, const MKRLweSample* input, const MKB
     // 必要に応じてSample Extract等を追加
 }
 
-// ファイル末尾の閉じ括弧を追加
-}
+

@@ -1,3 +1,37 @@
+// ...既存のインクルード...
+
+// ...既存のインクルード...
+
+// ...既存の関数定義...
+
+// 標準ライブラリ
+#include <vector>
+#include <complex>
+#include <cstdint>
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+#include <cstddef>
+
+// プロジェクトヘッダ
+#include "mk_tfhe_structs.h"
+#include "mk_ops.h"
+#include "bb_params.h"
+
+// Perm/Key cache: ダミー実装
+MKPackedRGSW* get_perm_key_cached(MKBootstrappingKey* mk_bk, const std::vector<int>& permutation, const TFheGateBootstrappingParameterSet* params) {
+    // 常に新しいMKPackedRGSWを返す（本来はキャッシュすべき）
+    return new MKPackedRGSW(params, BBIIMode::R12_TO_R13);
+}
+
+// 再帰型DFT（ダミー: 実際は分割統治）
+void mk_homomorphic_dft_recursive(std::vector<MKPackedRLWE*>& inputs, int32_t N, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
+    // ダミー: 各入力にDFTを適用
+    auto dft_matrix = mk_create_dft_matrix(N, false);
+    for (auto* acc : inputs) {
+        mk_homomorphic_dft(acc, dft_matrix);
+    }
+}
 // --- DFT/IDFT バッチ処理 ---
 void mk_homomorphic_dft_batch(std::vector<MKPackedRLWE*>& accs, const std::vector<std::vector<std::complex<double>>>& dft_matrix) {
     for (auto* acc : accs) {
@@ -60,8 +94,8 @@ void mk_homomorphic_idft_recursive(
     int32_t N,
     const MKBootstrappingKey* mk_bk,
     const TFheGateBootstrappingParameterSet* params
-#include "mk_ops.h"
-#include "bb_params.h"
+) {
+    size_t len = inputs.size();
     if (len <= 1) return;
     size_t half = len / 2;
     std::vector<MKPackedRLWE*> upper, lower;
@@ -250,7 +284,7 @@ void mk_inv_auto(MKPackedRLWE* acc, const BBII_KSKStruct* ksk, const TFheGateBoo
     int32_t N = acc->sample->N;
     // 1. Automorphism: 各成分に多項式反転を適用
     for (int i = 0; i <= k; ++i) {
-        mk_poly_inv_auto_inplace(acc->sample->parts[i]);
+        // mk_poly_inv_auto_inplace(acc->sample->parts[i]); // 未定義のため一時的に無効化
     }
 
     // 2. Key Switching: s(X^-1) -> s(X)
@@ -375,8 +409,12 @@ void mk_vec_mat_mult(
     }
 }
 
-// （以下、追加の関数定義があればここに記述）
 
-// ファイル末尾の閉じ括弧を追加
+// KSK cache: ダミー実装
+BBII_KSKStruct* get_ksk_cached(MKBootstrappingKey* mk_bk, int delta, int k, int N, const TFheGateBootstrappingParameterSet* params) {
+    // 常に新しいBBII_KSKStructを返す（本来はキャッシュすべき）
+    return new BBII_KSKStruct(k, N, params);
 }
+
+
 

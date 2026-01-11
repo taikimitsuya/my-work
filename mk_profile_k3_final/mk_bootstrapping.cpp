@@ -9,7 +9,6 @@
 #include "mk_packed_ops.h"
 #include <polynomials.h>
 
-namespace bbii {
 // DFTベースBlind Rotate（雛形・流れのみ）
 void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
     int32_t k = acc->k, N = acc->N;
@@ -42,8 +41,8 @@ void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const 
     int delta = ((_2N - bar_b) % _2N) / 2; // X^delta回転
     std::vector<int> permutation(N);
     for(int i=0; i<N; ++i) permutation[i] = (i + delta) % N;
-    MKPackedRGSW* perm_key = bbii::get_perm_key_cached(const_cast<MKBootstrappingKey*>(mk_bk), permutation, params);
-    BBII_KSKStruct* ksk = bbii::get_ksk_cached(const_cast<MKBootstrappingKey*>(mk_bk), delta, k, N, params);
+    MKPackedRGSW* perm_key = get_perm_key_cached(const_cast<MKBootstrappingKey*>(mk_bk), permutation, params);
+    BBII_KSKStruct* ksk = get_ksk_cached(const_cast<MKBootstrappingKey*>(mk_bk), delta, k, N, params);
     mk_batch_anti_rot(acc_packed, perm_key, ksk, params);
 
     // 5. Homomorphic IDFT（再帰版）
@@ -59,11 +58,14 @@ void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const 
 
     // 6. 結果を書き戻す
     mk_rlwe_copy(acc, acc_packed->sample);
+
+
+
+
     delete acc_packed;
 }
 void mk_cmux(MKRLweSample*, const TGswSampleFFT*, const MKRLweSample*, const MKRLweSample*, int32_t, const TFheGateBootstrappingParameterSet*);
 void mk_rlwe_clear(MKRLweSample*); 
-void mk_rlwe_copy(MKRLweSample*, const MKRLweSample*);
 void mk_mul_xai(MKRLweSample* r, const MKRLweSample* s, int32_t b, int32_t N){
     for(int i=0;i<=s->k;++i) {
         if (r->parts[i]->N != s->parts[i]->N) {
@@ -151,4 +153,4 @@ void mk_sample_extract(MKRLweSample* output, const MKRLweSample* acc, const MKBo
 
     delete acc_packed;
 }
-}
+

@@ -1,6 +1,6 @@
-
 #ifndef MK_TFHE_STRUCTS_H
 #define MK_TFHE_STRUCTS_H
+#include <complex>
 
 // 標準ライブラリ
 #include <vector>
@@ -150,10 +150,7 @@ struct MKBootstrappingKey {
             delete_TGswSample(t);
         }
     }
-
-
-
-
+};
 
 #include "mk_packed_ops.h"
 #endif
