@@ -77,37 +77,45 @@ int main() {
         global_profiler.time_keygen = (keygen1 - keygen0) + std::chrono::duration<double, std::milli>(kg_end - kg_start).count();
 
         std::cout << "Encrypting..." << std::endl;
-        Torus32 plain = 1000;
-        MKRLweSample* in = new MKRLweSample(k, mp->get_tfhe_params());
-        mk_lwe_sym_encrypt(in, plain, sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
+        // バッチ用入力生成
+        int batch_size = 8;
+        std::vector<Torus32> plains(batch_size, 1000);
+        std::vector<MKRLweSample*> ins(batch_size);
+        for(int i=0;i<batch_size;++i) {
+            ins[i] = new MKRLweSample(k, mp->get_tfhe_params());
+            mk_lwe_sym_encrypt(ins[i], plains[i], sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
+        }
 
-        MKRLweSample* out = new MKRLweSample(k, mp->get_tfhe_params());
-        std::cout << "Running Bootstrapping (This will take time)..." << std::endl;
+        std::vector<MKRLweSample*> outs(batch_size);
+        for(int i=0;i<batch_size;++i) outs[i] = new MKRLweSample(k, mp->get_tfhe_params());
+
+        std::cout << "Running Batch Bootstrapping (This will take time)..." << std::endl;
         auto bs_start = std::chrono::high_resolution_clock::now();
-        mk_bootstrapping(out, in, bk, plain, mp->get_tfhe_params());
+        mk_batch_bootstrapping(outs, ins, bk, plains, mp->get_tfhe_params());
         auto bs_end = std::chrono::high_resolution_clock::now();
         double total_bs_time = std::chrono::duration<double, std::milli>(bs_end - bs_start).count();
 
-        std::cout << "[DEBUG] After Bootstrapping. out->k=" << out->k << ", out->N=" << out->N << std::endl;
-        std::cout << "[DEBUG] out->parts[0]->coefsT[0..7]: ";
-        for(int i=0;i<8 && i<out->N;++i) std::cout << out->parts[0]->coefsT[i] << " ";
-        std::cout << std::endl;
+        for(int b=0;b<batch_size;++b) {
+            std::cout << "[DEBUG] After Bootstrapping. outs[" << b << "]->k=" << outs[b]->k << ", outs[" << b << "]->N=" << outs[b]->N << std::endl;
+            std::cout << "[DEBUG] outs[" << b << "]->parts[0]->coefsT[0..7]: ";
+            for(int i=0;i<8 && i<outs[b]->N;++i) std::cout << outs[b]->parts[0]->coefsT[i] << " ";
+            std::cout << std::endl;
 
-        // 復号（デバッグ用出力追加）
-        std::cout << "[DEBUG] Before Decryption: plain=" << plain << std::endl;
-        Torus32 decrypted = mk_lwe_decrypt(out, sks, mp->get_tfhe_params());
-        std::cout << "[DEBUG] After Decryption: decrypted=" << decrypted << std::endl;
-        std::cout << std::endl;
-        std::cout << "[Decryption Check]" << std::endl;
-        std::cout << "  Original Plaintext : " << plain << std::endl;
-        std::cout << "  Decrypted Value    : " << decrypted << std::endl;
-        if (plain == decrypted) {
-            std::cout << "  [OK] Decryption matches original plaintext." << std::endl;
-        } else {
-            std::cout << "  [NG] Decryption does NOT match original plaintext!" << std::endl;
+            // 復号（デバッグ用出力追加）
+            std::cout << "[DEBUG] Before Decryption: plain=" << plains[b] << std::endl;
+            Torus32 decrypted = mk_lwe_decrypt(outs[b], sks, mp->get_tfhe_params());
+            std::cout << "[DEBUG] After Decryption: decrypted=" << decrypted << std::endl;
+            std::cout << std::endl;
+            std::cout << "[Decryption Check]" << std::endl;
+            std::cout << "  Original Plaintext : " << plains[b] << std::endl;
+            std::cout << "  Decrypted Value    : " << decrypted << std::endl;
+            if (plains[b] == decrypted) {
+                std::cout << "  [OK] Decryption matches original plaintext." << std::endl;
+            } else {
+                std::cout << "  [NG] Decryption does NOT match original plaintext!" << std::endl;
+            }
+            std::cout << std::endl;
         }
-
-        std::cout << std::endl;
         std::cout << "==================================" << std::endl;
         std::cout << "         [Time Profile]           " << std::endl;
         std::cout << "==================================" << std::endl;
