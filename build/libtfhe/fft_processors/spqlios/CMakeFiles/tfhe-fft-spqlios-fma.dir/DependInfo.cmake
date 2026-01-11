@@ -26,12 +26,8 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/workspaces/my-work/src/libtfhe/fft_processors/spqlios/spqlios-fft-impl.cpp" "libtfhe/fft_processors/spqlios/CMakeFiles/tfhe-fft-spqlios-fma.dir/spqlios-fft-impl.cpp.o" "gcc" "libtfhe/fft_processors/spqlios/CMakeFiles/tfhe-fft-spqlios-fma.dir/spqlios-fft-impl.cpp.o.d"
   )
 
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
-  )
-
-# Targets to which this target links which contain Fortran sources.
-set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.

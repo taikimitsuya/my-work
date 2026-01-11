@@ -1,40 +1,52 @@
+
+
+
 #include "mk_methods.h"
 #include "mk_profiler.h"
 #include <iostream>
 #include <chrono>
+#include <tfhe/tfhe.h>
+#include <tfhe/tfhe_core.h>
+#include <tfhe/polynomials.h>
+#include <tfhe/tlwe.h>
+#include <tfhe/tgsw.h>
 
-#include <tfhe.h>
-#include <tfhe_core.h>
-#include <polynomials.h>
-#include <tlwe.h>
-#include <tgsw.h>
 
-namespace bbii {
-void mk_rlwe_clear(MKRLweSample* r){ for(int i=0;i<=r->k;++i) torusPolynomialClear(r->parts[i]); }
-void mk_rlwe_copy(MKRLweSample* d, const MKRLweSample* s){
+
+void mk_rlwe_clear(MKRLweSample* r) {
+    for(int i=0; i<=r->k; ++i) torusPolynomialClear(r->parts[i]);
+}
+
+void mk_rlwe_copy(MKRLweSample* d, const MKRLweSample* s) {
     if (d == s) return; // no-op for self-copy
-    for(int i=0;i<=d->k;++i){
+    for(int i=0; i<=d->k; ++i) {
         torusPolynomialCopy(d->parts[i], s->parts[i]);
     }
 }
-void mk_rlwe_addTo(MKRLweSample* r, const MKRLweSample* s){ for(int i=0;i<=r->k;++i) torusPolynomialAddTo(r->parts[i], s->parts[i]); }
-void mk_rlwe_subTo(MKRLweSample* r, const MKRLweSample* s){ for(int i=0;i<=r->k;++i) torusPolynomialSubTo(r->parts[i], s->parts[i]); }
+
+void mk_rlwe_addTo(MKRLweSample* r, const MKRLweSample* s) {
+    for(int i=0; i<=r->k; ++i) torusPolynomialAddTo(r->parts[i], s->parts[i]);
+}
+
+void mk_rlwe_subTo(MKRLweSample* r, const MKRLweSample* s) {
+    for(int i=0; i<=r->k; ++i) torusPolynomialSubTo(r->parts[i], s->parts[i]);
+}
 
 void mk_external_product(MKRLweSample* res, const TGswSampleFFT* bk, const MKRLweSample* acc, int32_t pid, const TFheGateBootstrappingParameterSet* p) {
     auto start = std::chrono::high_resolution_clock::now();
 
     TLweParams* tlp = const_cast<TLweParams*>(p->tgsw_params->tlwe_params);
-    TLweSample* tmp = new_TLweSample(tlp); 
-    
+    TLweSample* tmp = new_TLweSample(tlp);
+
     mk_rlwe_clear(res);
-    for(int i=0;i<=acc->k;++i){
-        torusPolynomialClear(&tmp->a[0]); 
-        torusPolynomialCopy(tmp->b, acc->parts[i]); 
-        tmp->current_variance=0;
-        
+    for(int i=0; i<=acc->k; ++i) {
+        torusPolynomialClear(&tmp->a[0]);
+        torusPolynomialCopy(tmp->b, acc->parts[i]);
+        tmp->current_variance = 0;
+
         tGswFFTExternMulToTLwe(tmp, bk, const_cast<TGswParams*>(p->tgsw_params));
-        
-        torusPolynomialAddTo(res->parts[i], tmp->b); 
+
+        torusPolynomialAddTo(res->parts[i], tmp->b);
         torusPolynomialAddTo(res->parts[pid], &tmp->a[0]);
     }
     delete_TLweSample(tmp);
@@ -44,14 +56,14 @@ void mk_external_product(MKRLweSample* res, const TGswSampleFFT* bk, const MKRLw
 }
 
 void mk_cmux(MKRLweSample* res, const TGswSampleFFT* bk, const MKRLweSample* in0, const MKRLweSample* in1, int32_t pid, const TFheGateBootstrappingParameterSet* p) {
-    MKRLweSample diff(in0->k, p); 
-    mk_rlwe_copy(&diff, in1); 
+    MKRLweSample diff(in0->k, p);
+    mk_rlwe_copy(&diff, in1);
     mk_rlwe_subTo(&diff, in0);
-    
-    MKRLweSample prod(in0->k, p); 
+
+    MKRLweSample prod(in0->k, p);
     mk_external_product(&prod, bk, &diff, pid, p);
-    
-    mk_rlwe_copy(res, in0); 
+
+    mk_rlwe_copy(res, in0);
     mk_rlwe_addTo(res, &prod);
 }
 
@@ -60,4 +72,5 @@ void mk_external_product(MKRLweSample* res, const MKPackedRGSW* rgsw, const MKRL
     const TGswSampleFFT* bk_fft = rgsw->sample;
     mk_external_product(res, bk_fft, acc, pid, params);
 }
-} 
+
+

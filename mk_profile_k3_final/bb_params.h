@@ -2,10 +2,8 @@
 #define BB_PARAMS_H
 #include <cmath>
 #include <vector>
-#include <tfhe.h>
-#include <tfhe_core.h>
-
-namespace bbii {
+#include <tfhe/tfhe.h>
+#include <tfhe/tfhe_core.h>
 
 // [追加] BBIIモード管理用enum
 enum class BBIIMode {
@@ -51,6 +49,5 @@ struct BBIIParams {
             tfhe_params = new_default_gate_bootstrapping_parameters(n);
         }
     }
-};
-}
+#endif
 #endif

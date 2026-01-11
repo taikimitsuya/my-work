@@ -1,30 +1,35 @@
+
 #ifndef MK_TFHE_STRUCTS_H
 #define MK_TFHE_STRUCTS_H
 
+// 標準ライブラリ
 #include <vector>
 #include <iostream>
+#include <map>
 
+// TFHEライブラリ
+#include <tfhe/tfhe.h>
+#include <tfhe/tgsw.h>
+#include <tfhe/tfhe_core.h>
+
+// プロジェクトヘッダ
 #include "bb_params.h"
 #include "mk_utils.h" // 自作アロケータ読み込み
-#include "mk_packed_ops.h"
 
-#include <tfhe.h>
-#include <tgsw.h>
-#include <map>
-#include <tfhe_core.h>
 
-namespace bbii {
+
+
 // 前方宣言
 struct MKPackedRGSW;
-struct MKKeySwitchKey;
+struct BBII_KSKStruct;
 struct MKBootstrappingKey;
 
 // --- 追加: Automorphism用 Key Switching Key ---
-struct MKKeySwitchKey {
+struct BBII_KSKStruct {
     int32_t k;
     int32_t N;
     std::vector<LweKeySwitchKey*> ks_keys; // 各パーティごとのKSK
-    MKKeySwitchKey(int32_t parties, int32_t N_, const TFheGateBootstrappingParameterSet* params) : k(parties), N(N_) {
+    BBII_KSKStruct(int32_t parties, int32_t N_, const TFheGateBootstrappingParameterSet* params) : k(parties), N(N_) {
         ks_keys.resize(k);
         constexpr int basebit = 2; // TFHE標準値（要調整）
         constexpr int t = 8;       // TFHE標準値（要調整）
@@ -33,7 +38,7 @@ struct MKKeySwitchKey {
             // 実際には正しい鍵で初期化が必要
         }
     }
-    ~MKKeySwitchKey() {
+    ~BBII_KSKStruct() {
         for(int i=0;i<k;++i) {
             if(ks_keys[i]) delete_LweKeySwitchKey(ks_keys[i]);
         }
@@ -102,13 +107,13 @@ struct MKPackedRLWE {
 struct MKBootstrappingKey {
     // perm_key/kskキャッシュ（順列→鍵, delta→鍵）
     std::map<std::vector<int>, MKPackedRGSW*> perm_key_cache;
-    std::map<int, MKKeySwitchKey*> ksk_cache;
+    std::map<int, BBII_KSKStruct*> ksk_cache;
     int32_t k;
     int32_t n_per_party;
     std::vector<std::vector<TGswSampleFFT*>> bk_fft;
     std::vector<std::vector<MKPackedRGSW*>> bk_packed;
     // 自己同型用KeySwitchingKey（各パーティ・各自己同型写像ごと）
-    std::vector<std::vector<MKKeySwitchKey*>> auto_ksk;
+    std::vector<std::vector<BBII_KSKStruct*>> auto_ksk;
     MKBootstrappingKey(int32_t parties, int32_t n, const TFheGateBootstrappingParameterSet* params) : k(parties), n_per_party(n) {
         bk_fft.resize(k);
         bk_packed.resize(k);
@@ -146,34 +151,9 @@ struct MKBootstrappingKey {
         }
     }
 
-};
 
 
-// ---- インライン関数群 ----
 
-// perm_keyキャッシュ取得
-inline MKPackedRGSW* get_perm_key_cached(MKBootstrappingKey* bk, const std::vector<int>& permutation, const TFheGateBootstrappingParameterSet* params) {
-    auto it = bk->perm_key_cache.find(permutation);
-    if(it != bk->perm_key_cache.end()) return it->second;
-    MKPackedRGSW* key = mk_create_permutation_key(permutation, params);
-    bk->perm_key_cache[permutation] = key;
-    return key;
-}
 
-// kskキャッシュ取得（delta等で区別）
-inline MKKeySwitchKey* get_ksk_cached(MKBootstrappingKey* bk, int delta, int32_t k, int32_t N, const TFheGateBootstrappingParameterSet* params) {
-    auto it = bk->ksk_cache.find(delta);
-    if(it != bk->ksk_cache.end()) return it->second;
-    MKKeySwitchKey* ksk = mk_create_automorphism_ksk(k, N, params);
-    bk->ksk_cache[delta] = ksk;
-    return ksk;
-}
-
-// Automorphism用KSK生成（雛形）
-inline MKKeySwitchKey* mk_create_automorphism_ksk(int32_t k, int32_t N, const TFheGateBootstrappingParameterSet* params) {
-    // 実際はs(X^-1)→s(X)変換用のKSKを生成
-    return new MKKeySwitchKey(k, N, params);
-}
-} // namespace bbii
-
+#include "mk_packed_ops.h"
 #endif

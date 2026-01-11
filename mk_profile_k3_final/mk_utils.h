@@ -2,7 +2,7 @@
 #define MK_UTILS_H
 #include <cstdlib>
 #include <iostream>
-#include <tfhe.h>
+#include <tfhe/tfhe.h>
 
 // 32バイト(256bit)アライメントでメモリを確保する
 // これにより AVX 命令でのクラッシュを防ぐ

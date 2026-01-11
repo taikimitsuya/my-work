@@ -1,35 +1,35 @@
+#undef MKKeySwitchKey
 #include <iostream>
 #include <cstdlib>
 #include <vector>
 #include <chrono>
 #include <iomanip>
 #include "mk_methods.h"
-#include "mk_profiler.h"
+#include "mk_tfhe_structs.h"
 #include "mk_packed_ops.h"
+#include "mk_profiler.h"
 
-using namespace std;
 
 MKProfiler global_profiler;
 
 int main() {
-        // DFTベースBlind Rotateのテスト呼び出し
-        extern void mk_test_blind_rotate_dft(const TFheGateBootstrappingParameterSet* params);
-        // テスト用パラメータセット（N=1024固定）
-        TFheGateBootstrappingParameterSet* test_params = new_default_gate_bootstrapping_parameters(110);
-        mk_test_blind_rotate_dft(test_params);
-        delete_gate_bootstrapping_parameters(test_params);
+    // DFTベースBlind Rotateのテスト呼び出し（デバッグ用）
+    // extern void mk_test_blind_rotate_dft(const TFheGateBootstrappingParameterSet* params);
+    // TFheGateBootstrappingParameterSet* test_params = new_default_gate_bootstrapping_parameters(110);
+    // mk_test_blind_rotate_dft(test_params);
+    // delete_gate_bootstrapping_parameters(test_params);
     int32_t k, rho;
     int32_t d = 2; // fixed
     int32_t N = 1024;
     int32_t REPEAT;
-    cout << "=== MK-TFHE Time Profiling ===" << endl;
-    cout << "パーティ数 k を入力してください: ";
-    cin >> k;
-    cout << "パラメータ rho を入力してください: ";
-    cin >> rho;
-    cout << "試行回数を入力してください: ";
-    cin >> REPEAT;
-    cout << "(d=2, N=1024 固定)" << endl;
+    std::cout << "=== MK-TFHE Time Profiling ===" << std::endl;
+    std::cout << "パーティ数 k を入力してください: ";
+    std::cin >> k;
+    std::cout << "パラメータ rho を入力してください: ";
+    std::cin >> rho;
+    std::cout << "試行回数を入力してください: ";
+    std::cin >> REPEAT;
+    std::cout << "(d=2, N=1024 固定)" << std::endl;
 
     // 平均用バッファ
     double sum_keygen = 0, sum_inputpack = 0, sum_blind = 0, sum_dft = 0, sum_extract = 0, sum_total = 0;
@@ -40,80 +40,87 @@ int main() {
         global_profiler.time_blind_rotate_control = 0;
         global_profiler.time_external_product = 0;
         global_profiler.time_sample_extract = 0;
-        cout << "\n[Run " << rep << "/" << REPEAT << "]" << endl;
-        cout << "Initializing Params..." << endl;
-        bbii::MKParams* mp = bbii::get_mk_test_params(k, d, rho, N);
-        bbii::BBIIParams* bp = mp->sk_params;
+        std::cout << "\n[Run " << rep << "/" << REPEAT << "]" << std::endl;
+        std::cout << "Initializing Params..." << std::endl;
+        MKParams* mp = get_mk_test_params(k, d, rho, N);
+        BBIIParams* bp = mp->sk_params;
 
-        cout << "==================================" << endl;
-        cout << "         [Parameters]            " << endl;
-        cout << "==================================" << endl;
-        cout << "  Parties (k)              : " << k << endl;
-        cout << "  Recursion Depth (d)      : " << d << endl;
-        cout << "  Partition Size (rho)     : " << rho << endl;
-        cout << "  TLWE Dimension (N)       : " << N << endl;
-        cout << "  n per party              : " << mp->n_per_party << endl;
-        cout << "==================================" << endl;
-        cout << endl;
+        std::cout << "==================================" << std::endl;
+        std::cout << "         [Parameters]            " << std::endl;
+        std::cout << "==================================" << std::endl;
+        std::cout << "  Parties (k)              : " << k << std::endl;
+        std::cout << "  Recursion Depth (d)      : " << d << std::endl;
+        std::cout << "  Partition Size (rho)     : " << rho << std::endl;
+        std::cout << "  TLWE Dimension (N)       : " << N << std::endl;
+        std::cout << "  n per party              : " << mp->n_per_party << std::endl;
+        std::cout << "==================================" << std::endl;
+        std::cout << std::endl;
 
-        cout << "Generating Keys..." << endl;
-        vector<bbii::MKSecretKey*> sks(k); 
-        bbii::MKBootstrappingKey* bk = new bbii::MKBootstrappingKey(k, mp->n_per_party, mp->get_tfhe_params());
+        std::cout << "Generating Keys..." << std::endl;
+        std::vector<MKSecretKey*> sks(k); 
+        auto* bk = new MKBootstrappingKey(k, mp->n_per_party, mp->get_tfhe_params());
         // KeyGen: 差分計測
         auto kg_start = std::chrono::high_resolution_clock::now();
         double keygen0 = global_profiler.time_keygen;
         for(int i=0; i<k; ++i){ 
-            sks[i] = new bbii::MKSecretKey(mp->get_tfhe_params()); 
+            sks[i] = new MKSecretKey(mp->get_tfhe_params()); 
             bk->generateKeyForParty(i, sks[i], mp->get_tfhe_params()); 
         }
         // KSK生成（Automorphism用KeySwitchingKeyを正しくセット）
         // 例: delta=1用KSKを生成してキャッシュに登録
         int delta = 1; // 必要に応じて変更
-        bbii::MKKeySwitchKey* ksk = new bbii::MKKeySwitchKey(k, mp->n_per_party, mp->get_tfhe_params());
-        bbii::mk_fill_automorphism_ksk(ksk, sks, mp->get_tfhe_params());
+        auto* ksk = new BBII_KSKStruct(k, mp->n_per_party, mp->get_tfhe_params());
+        mk_fill_automorphism_ksk(ksk, sks, mp->get_tfhe_params());
         bk->ksk_cache[delta] = ksk;
         auto kg_end = std::chrono::high_resolution_clock::now();
         double keygen1 = global_profiler.time_keygen;
         global_profiler.time_keygen = (keygen1 - keygen0) + std::chrono::duration<double, std::milli>(kg_end - kg_start).count();
 
-        cout << "Encrypting..." << endl;
+        std::cout << "Encrypting..." << std::endl;
         Torus32 plain = 1000;
-        bbii::MKRLweSample* in = new bbii::MKRLweSample(k, mp->get_tfhe_params());
-        bbii::mk_lwe_sym_encrypt(in, plain, sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
+        MKRLweSample* in = new MKRLweSample(k, mp->get_tfhe_params());
+        mk_lwe_sym_encrypt(in, plain, sks[0], 0, mp->get_tfhe_params(), mp->n_per_party);
 
-        bbii::MKRLweSample* out = new bbii::MKRLweSample(k, mp->get_tfhe_params());
-        cout << "Running Bootstrapping (This will take time)..." << endl;
+        MKRLweSample* out = new MKRLweSample(k, mp->get_tfhe_params());
+        std::cout << "Running Bootstrapping (This will take time)..." << std::endl;
         auto bs_start = std::chrono::high_resolution_clock::now();
-        bbii::mk_bootstrapping(out, in, bk, plain, mp->get_tfhe_params());
+        mk_bootstrapping(out, in, bk, plain, mp->get_tfhe_params());
         auto bs_end = std::chrono::high_resolution_clock::now();
         double total_bs_time = std::chrono::duration<double, std::milli>(bs_end - bs_start).count();
 
-        // 復号
-        Torus32 decrypted = bbii::mk_lwe_decrypt(out, sks, mp->get_tfhe_params());
-        cout << endl;
-        cout << "[Decryption Check]" << endl;
-        cout << "  Original Plaintext : " << plain << endl;
-        cout << "  Decrypted Value    : " << decrypted << endl;
+        std::cout << "[DEBUG] After Bootstrapping. out->k=" << out->k << ", out->N=" << out->N << std::endl;
+        std::cout << "[DEBUG] out->parts[0]->coefsT[0..7]: ";
+        for(int i=0;i<8 && i<out->N;++i) std::cout << out->parts[0]->coefsT[i] << " ";
+        std::cout << std::endl;
+
+        // 復号（デバッグ用出力追加）
+        std::cout << "[DEBUG] Before Decryption: plain=" << plain << std::endl;
+        Torus32 decrypted = mk_lwe_decrypt(out, sks, mp->get_tfhe_params());
+        std::cout << "[DEBUG] After Decryption: decrypted=" << decrypted << std::endl;
+        std::cout << std::endl;
+        std::cout << "[Decryption Check]" << std::endl;
+        std::cout << "  Original Plaintext : " << plain << std::endl;
+        std::cout << "  Decrypted Value    : " << decrypted << std::endl;
         if (plain == decrypted) {
-            cout << "  [OK] Decryption matches original plaintext." << endl;
+            std::cout << "  [OK] Decryption matches original plaintext." << std::endl;
         } else {
-            cout << "  [NG] Decryption does NOT match original plaintext!" << endl;
+            std::cout << "  [NG] Decryption does NOT match original plaintext!" << std::endl;
         }
 
-        cout << endl;
-        cout << "==================================" << endl;
-        cout << "         [Time Profile]           " << endl;
-        cout << "==================================" << endl;
-        cout << fixed << setprecision(16);
-        cout << "  0. Key Generation        : " << global_profiler.time_keygen << " ms" << endl;
-        cout << "  --------------------------------" << endl;
-        cout << "  1. Input Packing         : " << global_profiler.time_input_packing << " ms" << endl;
-        cout << "  2. Blind Rotate (Control): " << global_profiler.time_blind_rotate_control << " ms" << endl;
-        cout << "  3. Homomorphic DFT/Mult  : " << global_profiler.time_external_product << " ms" << endl;
-        cout << "  4. Sample Extract        : " << global_profiler.time_sample_extract << " ms" << endl;
-        cout << "----------------------------------" << endl;
-        cout << "Total Execution Time       : " << total_bs_time << " ms" << endl;
-        cout << "==================================" << endl;
+        std::cout << std::endl;
+        std::cout << "==================================" << std::endl;
+        std::cout << "         [Time Profile]           " << std::endl;
+        std::cout << "==================================" << std::endl;
+        std::cout << std::fixed << std::setprecision(16);
+        std::cout << "  0. Key Generation        : " << global_profiler.time_keygen << " ms" << std::endl;
+        std::cout << "  --------------------------------" << std::endl;
+        std::cout << "  1. Input Packing         : " << global_profiler.time_input_packing << " ms" << std::endl;
+        std::cout << "  2. Blind Rotate (Control): " << global_profiler.time_blind_rotate_control << " ms" << std::endl;
+        std::cout << "  3. Homomorphic DFT/Mult  : " << global_profiler.time_external_product << " ms" << std::endl;
+        std::cout << "  4. Sample Extract        : " << global_profiler.time_sample_extract << " ms" << std::endl;
+        std::cout << "----------------------------------" << std::endl;
+        std::cout << "Total Execution Time       : " << total_bs_time << " ms" << std::endl;
+        std::cout << "==================================" << std::endl;
 
         sum_keygen   += global_profiler.time_keygen;
         sum_inputpack+= global_profiler.time_input_packing;
@@ -129,16 +136,16 @@ int main() {
         delete bk;
         delete mp;
     }
-    cout << endl;
-    cout << "===== [平均 Time Profile] =====" << endl;
-    cout << fixed << setprecision(16);
-    cout << "  0. Key Generation        : " << (sum_keygen/REPEAT) << " ms" << endl;
-    cout << "  1. Input Packing         : " << (sum_inputpack/REPEAT) << " ms" << endl;
-    cout << "  2. Blind Rotate (Control): " << (sum_blind/REPEAT) << " ms" << endl;
-    cout << "  3. Homomorphic DFT/Mult  : " << (sum_dft/REPEAT) << " ms" << endl;
-    cout << "  4. Sample Extract        : " << (sum_extract/REPEAT) << " ms" << endl;
-    cout << "----------------------------------" << endl;
-    cout << "Total Execution Time       : " << (sum_total/REPEAT) << " ms" << endl;
-    cout << "==================================" << endl;
+    std::cout << std::endl;
+    std::cout << "===== [平均 Time Profile] =====" << std::endl;
+    std::cout << std::fixed << std::setprecision(16);
+    std::cout << "  0. Key Generation        : " << (sum_keygen/REPEAT) << " ms" << std::endl;
+    std::cout << "  1. Input Packing         : " << (sum_inputpack/REPEAT) << " ms" << std::endl;
+    std::cout << "  2. Blind Rotate (Control): " << (sum_blind/REPEAT) << " ms" << std::endl;
+    std::cout << "  3. Homomorphic DFT/Mult  : " << (sum_dft/REPEAT) << " ms" << std::endl;
+    std::cout << "  4. Sample Extract        : " << (sum_extract/REPEAT) << " ms" << std::endl;
+    std::cout << "----------------------------------" << std::endl;
+    std::cout << "Total Execution Time       : " << (sum_total/REPEAT) << " ms" << std::endl;
+    std::cout << "==================================" << std::endl;
     return 0;
 }

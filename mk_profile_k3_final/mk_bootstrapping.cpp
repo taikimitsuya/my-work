@@ -11,7 +11,7 @@
 
 namespace bbii {
 // DFTベースBlind Rotate（雛形・流れのみ）
-void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_input, const bbii::MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
+void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const MKBootstrappingKey* mk_bk, const TFheGateBootstrappingParameterSet* params) {
     int32_t k = acc->k, N = acc->N;
     // 1. accをパック型にラップ
     MKPackedRLWE* acc_packed = new MKPackedRLWE(k, params, BBIIMode::R12);
@@ -24,7 +24,7 @@ void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_i
     // 3. Homomorphic DFT
     // mk_homomorphic_dft(acc_packed, dft_mat); // ←従来のナイーブ版はコメントアウト
     // DFT入力ベクトルをバッチ化（パディング）
-    int dft_size = 8; // 最小再帰サイズ（例）
+    int dft_size = 8; // TODO: BBIIParams等から取得するよう拡張
     std::vector<MKPackedRLWE*> dft_inputs;
     dft_inputs.push_back(acc_packed);
     for(int i=1; i<dft_size; ++i) {
@@ -32,19 +32,19 @@ void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_i
         mk_rlwe_clear(dummy->sample);
         dft_inputs.push_back(dummy);
     }
-    bbii::mk_homomorphic_dft_recursive(dft_inputs, N, mk_bk, params);
-    // 結果の取り出し（0番目が処理結果）
+    mk_homomorphic_dft_recursive(dft_inputs, N, mk_bk, params);
     for(int i=1; i<dft_size; ++i) delete dft_inputs[i];
 
-
-    // 4. Batch-Anti-Rot（テスト用ダミー: perm_key, kskをその場で生成）
-    // 実際はdeltaやbk_input等から適切なperm_key, kskを選択
-    std::vector<int> dummy_perm(N); for(int i=0;i<N;++i) dummy_perm[i]=i; // 恒等順列
-    MKPackedRGSW* perm_key = new MKPackedRGSW(params, BBIIMode::R12_TO_R13); // ダミー
-    MKKeySwitchKey* ksk = new MKKeySwitchKey(k, N, params); // ダミー
+    // 4. Batch-Anti-Rot（本実装: delta, permutation, perm_key, kskをmk_bkから取得）
+    // delta計算: bk_inputの定数項（k番目）から
+    int32_t _2N = 2 * N;
+    int32_t bar_b = modSwitchFromTorus32(bk_input->parts[k]->coefsT[0], _2N);
+    int delta = ((_2N - bar_b) % _2N) / 2; // X^delta回転
+    std::vector<int> permutation(N);
+    for(int i=0; i<N; ++i) permutation[i] = (i + delta) % N;
+    MKPackedRGSW* perm_key = get_perm_key_cached(const_cast<MKBootstrappingKey*>(mk_bk), permutation, params);
+    BBII_KSKStruct* ksk = get_ksk_cached(const_cast<MKBootstrappingKey*>(mk_bk), delta, k, N, params);
     mk_batch_anti_rot(acc_packed, perm_key, ksk, params);
-    delete perm_key;
-    delete ksk;
 
     // 5. Homomorphic IDFT（再帰版）
     std::vector<MKPackedRLWE*> idft_inputs;
@@ -54,7 +54,7 @@ void mk_blind_rotate_dft(bbii::MKRLweSample* acc, const bbii::MKRLweSample* bk_i
         mk_rlwe_clear(dummy->sample);
         idft_inputs.push_back(dummy);
     }
-    bbii::mk_homomorphic_idft_recursive(idft_inputs, N, mk_bk, params);
+    mk_homomorphic_idft_recursive(idft_inputs, N, mk_bk, params);
     for(int i=1; i<dft_size; ++i) delete idft_inputs[i];
 
     // 6. 結果を書き戻す
@@ -138,8 +138,8 @@ void mk_sample_extract(MKRLweSample* output, const MKRLweSample* acc, const MKBo
     std::vector<int> permutation(N);
     for(int i=0;i<N;++i) permutation[i] = (i+delta)%N;
     // perm_key/kskをキャッシュ経由で取得
-    MKPackedRGSW* perm_key = bbii::get_perm_key_cached(const_cast<bbii::MKBootstrappingKey*>(mk_bk), permutation, params);
-    MKKeySwitchKey* ksk = bbii::get_ksk_cached(const_cast<bbii::MKBootstrappingKey*>(mk_bk), delta, k, N, params);
+    MKPackedRGSW* perm_key = get_perm_key_cached(const_cast<MKBootstrappingKey*>(mk_bk), permutation, params);
+    BBII_KSKStruct* ksk = get_ksk_cached(const_cast<MKBootstrappingKey*>(mk_bk), delta, k, N, params);
 
     // Batch-Anti-Rot
     mk_batch_anti_rot(acc_packed, perm_key, ksk, params);

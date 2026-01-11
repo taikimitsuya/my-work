@@ -1,7 +1,10 @@
 #include "mk_methods.h"
 #include "mk_profiler.h"
-#include <iostream> 
+#include <iostream>
 #include <cstdlib>
+#include <vector>
+#include <chrono>
+#include <tfhe/tfhe.h>
 
 namespace bbii {
 
