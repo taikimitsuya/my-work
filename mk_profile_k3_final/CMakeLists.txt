@@ -11,7 +11,6 @@ set(SOURCES
     mk_lwe.cpp
     mk_ops.cpp
     mk_packed_ops.cpp
-    mk_test_dummy.cpp
     mk_profiler.cpp
     mk_params.cpp
     mk_methods.cpp

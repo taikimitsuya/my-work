@@ -321,30 +321,6 @@ mk_profiler.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_profiler.cpp.s
 .PHONY : mk_profiler.cpp.s
 
-mk_test_dummy.o: mk_test_dummy.cpp.o
-.PHONY : mk_test_dummy.o
-
-# target to build an object file
-mk_test_dummy.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.o
-.PHONY : mk_test_dummy.cpp.o
-
-mk_test_dummy.i: mk_test_dummy.cpp.i
-.PHONY : mk_test_dummy.i
-
-# target to preprocess a source file
-mk_test_dummy.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.i
-.PHONY : mk_test_dummy.cpp.i
-
-mk_test_dummy.s: mk_test_dummy.cpp.s
-.PHONY : mk_test_dummy.s
-
-# target to generate assembly for a file
-mk_test_dummy.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_mk_test.dir/build.make CMakeFiles/main_mk_test.dir/mk_test_dummy.cpp.s
-.PHONY : mk_test_dummy.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -378,9 +354,6 @@ help:
 	@echo "... mk_profiler.o"
 	@echo "... mk_profiler.i"
 	@echo "... mk_profiler.s"
-	@echo "... mk_test_dummy.o"
-	@echo "... mk_test_dummy.i"
-	@echo "... mk_test_dummy.s"
 .PHONY : help
 
 

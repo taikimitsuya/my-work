@@ -34,4 +34,18 @@ void mk_lwe_sym_encrypt(MKRLweSample* res, Torus32 msg, const MKSecretKey* sk, i
     auto end = std::chrono::high_resolution_clock::now();
     global_profiler.time_encrypt += std::chrono::duration<double, std::milli>(end - start).count();
 }
-Torus32 mk_lwe_decrypt(const MKRLweSample* c, const std::vector<MKSecretKey*>& keys, const TFheGateBootstrappingParameterSet* p) { return c->parts[c->k]->coefsT[0]; }
+Torus32 mk_lwe_decrypt(const MKRLweSample* c, const std::vector<MKSecretKey*>& keys, const TFheGateBootstrappingParameterSet* p) {
+    int32_t k = c->k;
+    int32_t N = p->in_out_params->n; // n_per_party
+    Torus32 b = c->parts[k]->coefsT[0];
+    Torus32 sum_as = 0;
+    for(int u=0; u<k; ++u) {
+        const LweKey* key = keys[u]->lwe_key;
+        const TorusPolynomial* poly = c->parts[u];
+        for(int i=0; i<N; ++i) {
+            sum_as += poly->coefsT[i] * key->key[i];
+        }
+    }
+    Torus32 phase = b - sum_as;
+    return phase;
+}
