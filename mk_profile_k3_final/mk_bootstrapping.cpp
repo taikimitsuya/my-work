@@ -42,8 +42,8 @@ void mk_blind_rotate_dft(MKRLweSample* acc, const MKRLweSample* bk_input, const 
     int delta = ((_2N - bar_b) % _2N) / 2; // X^delta回転
     std::vector<int> permutation(N);
     for(int i=0; i<N; ++i) permutation[i] = (i + delta) % N;
-    MKPackedRGSW* perm_key = get_perm_key_cached(const_cast<MKBootstrappingKey*>(mk_bk), permutation, params);
-    BBII_KSKStruct* ksk = get_ksk_cached(const_cast<MKBootstrappingKey*>(mk_bk), delta, k, N, params);
+    MKPackedRGSW* perm_key = bbii::get_perm_key_cached(const_cast<MKBootstrappingKey*>(mk_bk), permutation, params);
+    BBII_KSKStruct* ksk = bbii::get_ksk_cached(const_cast<MKBootstrappingKey*>(mk_bk), delta, k, N, params);
     mk_batch_anti_rot(acc_packed, perm_key, ksk, params);
 
     // 5. Homomorphic IDFT（再帰版）

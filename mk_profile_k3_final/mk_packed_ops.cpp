@@ -101,44 +101,57 @@ void set_monomial_scaled(TorusPolynomial* poly, int32_t power, int32_t scalar, i
 }
 
 // Permutation Key (Trivial RGSW of X^delta) の生成
+
+// 回転量 delta に対応する単項式 X^delta を暗号化したRGSWを返す
 MKPackedRGSW* mk_create_permutation_key(const std::vector<int>& permutation, const TFheGateBootstrappingParameterSet* params) {
-    // 1. シフト量 delta の特定
-    int32_t N = params->in_out_params->n;
-    int32_t delta = 0;
-    if (!permutation.empty()) {
-        delta = permutation[0];
-    }
-
     MKPackedRGSW* key = new MKPackedRGSW(params, BBIIMode::R12_TO_R13);
+    
+    // 1. 回転量 delta を取得
+    int32_t N = params->in_out_params->n;
+    int32_t delta = permutation.empty() ? 0 : permutation[0];
 
-    const TGswParams* tgsw_params = params->tgsw_params;
-    TGswSample* temp_rgsw = new_TGswSample(tgsw_params);
+    // 2. 一時的なTGswSampleを作成
+    TGswSample* temp_rgsw = new_TGswSample(params->tgsw_params);
+    const TGswParams* tgsw_p = params->tgsw_params;
+    int k_tfhe = tgsw_p->tlwe_params->k; // 通常は 1
+    int l = tgsw_p->l;
+    int Bgbit = tgsw_p->Bgbit;
 
-    int32_t l = tgsw_params->l;
-    int32_t Bgbit = tgsw_params->Bgbit;
-    int32_t tfhe_k = tgsw_params->tlwe_params->k;
-
-    for (int32_t bloc = 0; bloc <= tfhe_k; ++bloc) {
-        for (int32_t i = 0; i < l; ++i) {
-            int32_t row_idx = bloc * l + i;
-            int32_t shift = 32 - (i + 1) * Bgbit;
-            int32_t scalar = (shift >= 0) ? (1 << shift) : 0;
+    // 3. Trivial Encryption ( (X^delta * H) を平文としてセット )
+    // RGSWの各行についてループ
+    for (int bloc = 0; bloc <= k_tfhe; ++bloc) {
+        for (int i = 0; i < l; ++i) {
+            int row_idx = bloc * l + i;
             TLweSample* row_tlwe = &temp_rgsw->all_sample[row_idx];
-            for (int32_t j = 0; j < tfhe_k; ++j) {
-                torusPolynomialClear(&row_tlwe->a[j]);
-            }
-            if (bloc < tfhe_k) {
-                set_monomial_scaled(&row_tlwe->a[bloc], delta, scalar, N);
-                torusPolynomialClear(row_tlwe->b);
+
+            // ガジェット係数 H_i = 1 / Bg^{i+1} に相当するスケーリング
+            // Torus32表現: 1.0 * 2^32 / Bg^{i+1}
+            // 注意: Bgbit=10, l=3 の場合などを考慮してシフト計算
+            int32_t shift = 32 - (i + 1) * Bgbit;
+            int32_t scalar = 1 << shift;
+
+            // ノイズなし (Variance=0) でセット
+            row_tlwe->current_variance = 0.0;
+            for(int j=0; j<=k_tfhe; ++j) torusPolynomialClear(&row_tlwe->a[j]); // a, b初期化
+
+            // 対角成分（blocに対応する多項式）に単項式をセット
+            TorusPolynomial* target_poly = (bloc < k_tfhe) ? &row_tlwe->a[bloc] : row_tlwe->b;
+            
+            // X^delta * scalar を多項式にセット
+            int32_t p = delta % (2 * N);
+            if (p < 0) p += 2 * N;
+            
+            if (p < N) {
+                target_poly->coefsT[p] = scalar;
             } else {
-                set_monomial_scaled(row_tlwe->b, delta, scalar, N);
+                target_poly->coefsT[p - N] = -scalar; // X^{N+i} = -X^i
             }
-            row_tlwe->current_variance = 0;
         }
     }
 
-    // FFT変換
-    tGswToFFTConvert(key->sample, temp_rgsw, tgsw_params);
+    // 4. FFT領域へ変換して格納
+    tGswToFFTConvert(key->sample, temp_rgsw, params->tgsw_params);
+    
     delete_TGswSample(temp_rgsw);
     return key;
 }
