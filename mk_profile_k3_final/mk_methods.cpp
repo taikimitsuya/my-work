@@ -22,11 +22,17 @@ void mk_batch_bootstrapping(
         }
         packed_inputs.push_back(acc);
     }
-    // ここで一括Blind Rotate (DFT) を呼び出す（仮: 未実装）
-    // mk_blind_rotate_dft_batch(packed_inputs, ...);
+    // DFT/IDFT バッチ処理例（本来はBlind Rotate/DFT/IDFT/Extractを組み合わせる）
+    int N = params->in_out_params->n;
+    auto dft_matrix = mk_create_dft_matrix(N, false);
+    auto idft_matrix = mk_create_dft_matrix(N, true);
+    mk_homomorphic_dft_batch(packed_inputs, dft_matrix);
+    mk_homomorphic_idft_batch(packed_inputs, idft_matrix);
 
-    // 結果の抽出（仮: 未実装）
-    // for (auto* acc : packed_inputs) { ... }
+    // 結果の抽出（仮: Sample Extract未実装）
+    for(size_t i=0; i<results.size() && i<packed_inputs.size(); ++i) {
+        mk_rlwe_copy(results[i], packed_inputs[i]->sample);
+    }
 
     // メモリ解放
     for(auto* acc : packed_inputs) delete acc;

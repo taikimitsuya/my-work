@@ -1,3 +1,6 @@
+// DFT/IDFT バッチ処理
+void mk_homomorphic_dft_batch(std::vector<MKPackedRLWE*>& accs, const std::vector<std::vector<std::complex<double>>>& dft_matrix);
+void mk_homomorphic_idft_batch(std::vector<MKPackedRLWE*>& accs, const std::vector<std::vector<std::complex<double>>>& idft_matrix);
 // インクルードガード
 #ifndef MK_PACKED_OPS_H
 #define MK_PACKED_OPS_H

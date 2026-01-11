@@ -1,3 +1,15 @@
+// --- DFT/IDFT バッチ処理 ---
+void mk_homomorphic_dft_batch(std::vector<MKPackedRLWE*>& accs, const std::vector<std::vector<std::complex<double>>>& dft_matrix) {
+    for (auto* acc : accs) {
+        mk_homomorphic_dft(acc, dft_matrix);
+    }
+}
+
+void mk_homomorphic_idft_batch(std::vector<MKPackedRLWE*>& accs, const std::vector<std::vector<std::complex<double>>>& idft_matrix) {
+    for (auto* acc : accs) {
+        mk_homomorphic_idft(acc, idft_matrix);
+    }
+}
 // --- ダミー実装: mk_slice, mk_butterfly ---
 void mk_slice(const std::vector<MKPackedRLWE*>& input, std::vector<MKPackedRLWE*>& out_upper, std::vector<MKPackedRLWE*>& out_lower) {
     size_t half = input.size() / 2;
